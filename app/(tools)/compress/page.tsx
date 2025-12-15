@@ -4,9 +4,24 @@ import { useState, useCallback } from 'react';
 import { FileOutput, Download, ArrowLeft, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
-import { compressPDF, CompressionLevel, CompressionProgress, CompressionResult } from '@/lib/pdf/compress';
-import { downloadPDF } from '@/lib/pdf/utils';
 import { formatFileSize } from '@/lib/utils';
+
+type CompressionLevel = 'low' | 'medium' | 'high';
+
+interface CompressionProgress {
+  current: number;
+  total: number;
+  percentage: number;
+  status: string;
+}
+
+interface CompressionResult {
+  data: Uint8Array;
+  originalSize: number;
+  compressedSize: number;
+  savings: number;
+  savingsPercent: number;
+}
 
 const compressionLevels: { level: CompressionLevel; label: string; description: string }[] = [
   { level: 'low', label: 'Low', description: 'Best quality, minimal compression' },
@@ -42,6 +57,8 @@ export default function CompressPage() {
     setError(null);
 
     try {
+      // Dynamic import to avoid SSR issues
+      const { compressPDF } = await import('@/lib/pdf/compress');
       const compressionResult = await compressPDF(file, compressionLevel, (p) => setProgress(p));
       setResult(compressionResult);
     } catch (err) {
@@ -51,8 +68,9 @@ export default function CompressPage() {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (result && file) {
+      const { downloadPDF } = await import('@/lib/pdf/utils');
       const filename = file.name.replace('.pdf', '_compressed.pdf');
       downloadPDF(result.data, filename);
     }

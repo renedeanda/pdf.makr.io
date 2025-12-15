@@ -1,12 +1,17 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { ImagePlus, Download, ArrowLeft, X, GripVertical } from 'lucide-react';
+import { ImagePlus, Download, ArrowLeft, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
-import { imagesToPDF, ConversionProgress } from '@/lib/pdf/convert';
-import { downloadPDF } from '@/lib/pdf/utils';
 import { formatFileSize, generateId } from '@/lib/utils';
+
+interface ConversionProgress {
+  current: number;
+  total: number;
+  percentage: number;
+  status: string;
+}
 
 interface ImageFile {
   id: string;
@@ -63,6 +68,7 @@ export default function ImagesToPDFPage() {
     setError(null);
 
     try {
+      const { imagesToPDF } = await import('@/lib/pdf/convert');
       const pdfData = await imagesToPDF(
         images.map(img => img.file),
         { pageSize, orientation, margin: 20 },
@@ -76,8 +82,9 @@ export default function ImagesToPDFPage() {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (result) {
+      const { downloadPDF } = await import('@/lib/pdf/utils');
       downloadPDF(result, 'images.pdf');
     }
   };
@@ -133,7 +140,7 @@ export default function ImagesToPDFPage() {
             PDF Created Successfully!
           </h2>
           <p className="text-text-secondary mb-6">
-            {images.length} images • {formatFileSize(result.length)}
+            {images.length} images - {formatFileSize(result.length)}
           </p>
           <div className="flex justify-center gap-4">
             <Button onClick={handleDownload} size="lg">
@@ -257,7 +264,7 @@ export default function ImagesToPDFPage() {
               {/* Summary & Actions */}
               <div className="flex items-center justify-between pt-4 border-t border-border-light">
                 <div className="text-sm text-text-secondary">
-                  {images.length} images • {formatFileSize(totalSize)}
+                  {images.length} images - {formatFileSize(totalSize)}
                 </div>
                 <div className="flex gap-3">
                   <Button variant="ghost" onClick={handleReset}>

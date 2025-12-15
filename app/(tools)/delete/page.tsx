@@ -5,9 +5,14 @@ import { Trash2, Download, ArrowLeft, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
 import { PageSelector } from '@/components/pdf';
-import { deletePages, EditProgress } from '@/lib/pdf/edit';
-import { getPDFPageCount, downloadPDF } from '@/lib/pdf/utils';
 import { formatFileSize } from '@/lib/utils';
+
+interface EditProgress {
+  current: number;
+  total: number;
+  percentage: number;
+  status: string;
+}
 
 export default function DeletePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -26,6 +31,7 @@ export default function DeletePage() {
     }
 
     try {
+      const { getPDFPageCount } = await import('@/lib/pdf/utils');
       const count = await getPDFPageCount(droppedFile);
       setFile(droppedFile);
       setFileUrl(URL.createObjectURL(droppedFile));
@@ -50,6 +56,8 @@ export default function DeletePage() {
     setError(null);
 
     try {
+      const { deletePages } = await import('@/lib/pdf/edit');
+      const { downloadPDF } = await import('@/lib/pdf/utils');
       const result = await deletePages(file, selectedPages, (p) => setProgress(p));
       const filename = file.name.replace('.pdf', '_edited.pdf');
       downloadPDF(result, filename);

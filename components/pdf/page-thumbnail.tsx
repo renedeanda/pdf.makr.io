@@ -3,12 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Configure PDF.js worker
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-}
 
 interface PageThumbnailProps {
   pdfUrl: string;
@@ -44,6 +38,10 @@ export function PageThumbnail({
       try {
         setLoading(true);
         setError(false);
+
+        // Dynamic import to avoid SSR issues
+        const pdfjsLib = await import('pdfjs-dist');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
         const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
         if (cancelled) return;

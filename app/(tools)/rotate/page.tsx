@@ -5,10 +5,15 @@ import { RotateCw, Download, ArrowLeft, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
 import { PageSelector } from '@/components/pdf';
-import { rotatePages, rotateAllPages, EditProgress } from '@/lib/pdf/edit';
-import { getPDFPageCount, downloadPDF } from '@/lib/pdf/utils';
 import { formatFileSize } from '@/lib/utils';
 import type { RotationAngle } from '@/types/pdf';
+
+interface EditProgress {
+  current: number;
+  total: number;
+  percentage: number;
+  status: string;
+}
 
 export default function RotatePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -28,6 +33,7 @@ export default function RotatePage() {
     }
 
     try {
+      const { getPDFPageCount } = await import('@/lib/pdf/utils');
       const count = await getPDFPageCount(droppedFile);
       setFile(droppedFile);
       setFileUrl(URL.createObjectURL(droppedFile));
@@ -81,6 +87,9 @@ export default function RotatePage() {
     setError(null);
 
     try {
+      const { rotatePages } = await import('@/lib/pdf/edit');
+      const { downloadPDF } = await import('@/lib/pdf/utils');
+
       const rotationMap = new Map<number, RotationAngle>();
       rotations.forEach((angle, page) => {
         if (angle !== 0) {
@@ -178,7 +187,7 @@ export default function RotatePage() {
             <div>
               <p className="font-medium text-text-primary">{file.name}</p>
               <p className="text-sm text-text-secondary">
-                {pageCount} pages • {formatFileSize(file.size)}
+                {pageCount} pages - {formatFileSize(file.size)}
               </p>
             </div>
             <Button variant="ghost" onClick={handleReset}>
@@ -197,7 +206,7 @@ export default function RotatePage() {
                 disabled={selectedPages.length === 0}
               >
                 <RotateCcw className="h-4 w-4 mr-1" />
-                Left 90°
+                Left 90
               </Button>
               <Button
                 variant="secondary"
@@ -206,7 +215,7 @@ export default function RotatePage() {
                 disabled={selectedPages.length === 0}
               >
                 <RotateCw className="h-4 w-4 mr-1" />
-                Right 90°
+                Right 90
               </Button>
               <Button
                 variant="secondary"
@@ -214,7 +223,7 @@ export default function RotatePage() {
                 onClick={() => rotateSelected(180)}
                 disabled={selectedPages.length === 0}
               >
-                180°
+                180
               </Button>
             </div>
             <div className="border-l border-border-medium h-6" />
@@ -251,7 +260,7 @@ export default function RotatePage() {
               </Button>
               <Button onClick={handleApply} disabled={changedPages === 0}>
                 <Download className="h-5 w-5 mr-2" />
-                Apply & Download
+                Apply and Download
               </Button>
             </div>
           </div>
