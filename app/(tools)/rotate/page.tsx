@@ -158,14 +158,14 @@ export default function RotatePage() {
       )}
 
       {/* Processing State */}
-      {processing && progress && (
+      {processing && (
         <div className="rounded-xl border border-border-medium bg-surface-50 p-8">
           <h2 className="text-lg font-semibold text-text-primary mb-4 text-center">
             Rotating Pages...
           </h2>
           <ProgressBar
-            progress={progress.percentage}
-            status={progress.status}
+            progress={progress?.percentage ?? 0}
+            status={progress?.status ?? 'Starting rotation...'}
           />
         </div>
       )}
@@ -183,14 +183,14 @@ export default function RotatePage() {
       {file && fileUrl && !processing && (
         <div className="space-y-6">
           {/* File Info */}
-          <div className="flex items-center justify-between p-4 rounded-lg border border-border-medium bg-surface-50">
-            <div>
-              <p className="font-medium text-text-primary">{file.name}</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-border-medium bg-surface-50">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-text-primary truncate">{file.name}</p>
               <p className="text-sm text-text-secondary">
-                {pageCount} pages - {formatFileSize(file.size)}
+                {pageCount} pages • {formatFileSize(file.size)}
               </p>
             </div>
-            <Button variant="ghost" onClick={handleReset}>
+            <Button variant="ghost" onClick={handleReset} className="shrink-0">
               Change File
             </Button>
           </div>

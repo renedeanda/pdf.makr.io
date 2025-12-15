@@ -89,7 +89,7 @@ export default function HomePage() {
         <p className="mt-6 text-lg lg:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
           Merge, split, compress, and convert PDFs—all in your browser.
           <br className="hidden sm:block" />
-          No uploads. No tracking. Actually free.
+          No uploads required. Completely free.
         </p>
       </section>
 

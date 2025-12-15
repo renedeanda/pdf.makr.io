@@ -112,14 +112,14 @@ export default function DeletePage() {
       )}
 
       {/* Processing State */}
-      {processing && progress && (
+      {processing && (
         <div className="rounded-xl border border-border-medium bg-surface-50 p-8">
           <h2 className="text-lg font-semibold text-text-primary mb-4 text-center">
             Removing Pages...
           </h2>
           <ProgressBar
-            progress={progress.percentage}
-            status={progress.status}
+            progress={progress?.percentage ?? 0}
+            status={progress?.status ?? 'Starting deletion...'}
           />
         </div>
       )}
@@ -137,14 +137,14 @@ export default function DeletePage() {
       {file && fileUrl && !processing && (
         <div className="space-y-6">
           {/* File Info */}
-          <div className="flex items-center justify-between p-4 rounded-lg border border-border-medium bg-surface-50">
-            <div>
-              <p className="font-medium text-text-primary">{file.name}</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-border-medium bg-surface-50">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-text-primary truncate">{file.name}</p>
               <p className="text-sm text-text-secondary">
                 {pageCount} pages • {formatFileSize(file.size)}
               </p>
             </div>
-            <Button variant="ghost" onClick={handleReset}>
+            <Button variant="ghost" onClick={handleReset} className="shrink-0">
               Change File
             </Button>
           </div>
@@ -172,20 +172,21 @@ export default function DeletePage() {
           />
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-border-light">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-border-light">
             <div className="text-sm text-text-secondary">
               {selectedPages.length > 0
-                ? `${selectedPages.length} page${selectedPages.length > 1 ? 's' : ''} selected for deletion • ${remainingPages} pages will remain`
+                ? `${selectedPages.length} page${selectedPages.length > 1 ? 's' : ''} selected • ${remainingPages} will remain`
                 : 'Select pages to delete'}
             </div>
-            <div className="flex gap-3">
-              <Button variant="ghost" onClick={handleReset}>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <Button variant="ghost" onClick={handleReset} className="w-full sm:w-auto">
                 Start Over
               </Button>
               <Button
                 variant="danger"
                 onClick={handleDelete}
                 disabled={selectedPages.length === 0 || selectedPages.length >= pageCount}
+                className="w-full sm:w-auto"
               >
                 <Trash2 className="h-5 w-5 mr-2" />
                 Delete {selectedPages.length} Page{selectedPages.length !== 1 ? 's' : ''}

@@ -148,12 +148,12 @@ export default function CompressPage() {
             </div>
           </div>
 
-          <div className="flex justify-center gap-4">
-            <Button onClick={handleDownload} size="lg">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+            <Button onClick={handleDownload} size="lg" className="w-full sm:w-auto">
               <Download className="h-5 w-5 mr-2" />
               Download Compressed PDF
             </Button>
-            <Button variant="secondary" onClick={handleReset}>
+            <Button variant="secondary" onClick={handleReset} className="w-full sm:w-auto">
               Compress Another
             </Button>
           </div>
@@ -161,14 +161,14 @@ export default function CompressPage() {
       )}
 
       {/* Processing State */}
-      {processing && progress && (
+      {processing && (
         <div className="rounded-xl border border-border-medium bg-surface-50 p-8">
           <h2 className="text-lg font-semibold text-text-primary mb-4 text-center">
             Compressing PDF...
           </h2>
           <ProgressBar
-            progress={progress.percentage}
-            status={progress.status}
+            progress={progress?.percentage ?? 0}
+            status={progress?.status ?? 'Starting compression...'}
           />
           <p className="text-sm text-text-secondary text-center mt-4">
             This may take a while for large files
@@ -188,14 +188,14 @@ export default function CompressPage() {
           ) : (
             <div className="space-y-6">
               {/* File Info */}
-              <div className="flex items-center justify-between p-4 rounded-lg border border-border-medium bg-surface-50">
-                <div>
-                  <p className="font-medium text-text-primary">{file.name}</p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-border-medium bg-surface-50">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-text-primary truncate">{file.name}</p>
                   <p className="text-sm text-text-secondary">
                     {formatFileSize(file.size)}
                   </p>
                 </div>
-                <Button variant="ghost" onClick={handleReset}>
+                <Button variant="ghost" onClick={handleReset} className="shrink-0">
                   Change File
                 </Button>
               </div>
