@@ -46,7 +46,8 @@ export async function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
 }
 
 export function arrayBufferToBlob(buffer: ArrayBuffer | Uint8Array, type: string): Blob {
-  return new Blob([buffer], { type });
+  const data = buffer instanceof Uint8Array ? new Uint8Array(buffer) : buffer;
+  return new Blob([data], { type });
 }
 
 export function debounce<T extends (...args: Parameters<T>) => ReturnType<T>>(

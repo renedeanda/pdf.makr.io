@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Layers, Download, Plus, ArrowLeft, GripVertical, X } from 'lucide-react';
+import { Layers, Download, ArrowLeft, GripVertical, X } from 'lucide-react';
 import Link from 'next/link';
-import { Button, UploadZone, ProgressBar, Alert, FileCard } from '@/components/ui';
-import { mergePDFs, MergeProgress } from '@/lib/pdf/merge';
-import { getPDFPageCount, downloadPDF } from '@/lib/pdf/utils';
+import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
 import { formatFileSize, generateId } from '@/lib/utils';
+
+interface MergeProgress {
+  current: number;
+  total: number;
+  percentage: number;
+}
 
 interface PDFFileItem {
   id: string;
@@ -35,6 +39,8 @@ export default function MergePage() {
       }
 
       try {
+        // Dynamic import to avoid SSR issues
+        const { getPDFPageCount } = await import('@/lib/pdf/utils');
         const pageCount = await getPDFPageCount(file);
         newFiles.push({
           id: generateId(),
@@ -55,15 +61,6 @@ export default function MergePage() {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   }, []);
 
-  const moveFile = useCallback((fromIndex: number, toIndex: number) => {
-    setFiles((prev) => {
-      const newFiles = [...prev];
-      const [removed] = newFiles.splice(fromIndex, 1);
-      newFiles.splice(toIndex, 0, removed);
-      return newFiles;
-    });
-  }, []);
-
   const handleMerge = async () => {
     if (files.length < 2) {
       setError('Please add at least 2 PDF files to merge');
@@ -75,6 +72,7 @@ export default function MergePage() {
     setError(null);
 
     try {
+      const { mergePDFs } = await import('@/lib/pdf/merge');
       const merged = await mergePDFs(
         files.map((f) => f.file),
         (p) => setProgress(p)
@@ -87,8 +85,9 @@ export default function MergePage() {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (result) {
+      const { downloadPDF } = await import('@/lib/pdf/utils');
       const filename = files.length > 0
         ? `merged_${files[0].name.replace('.pdf', '')}.pdf`
         : 'merged.pdf';
@@ -147,7 +146,7 @@ export default function MergePage() {
             PDF Merged Successfully!
           </h2>
           <p className="text-text-secondary mb-6">
-            {files.length} files merged • {totalPages} pages • {formatFileSize(result.length)}
+            {files.length} files merged - {totalPages} pages - {formatFileSize(result.length)}
           </p>
           <div className="flex justify-center gap-4">
             <Button onClick={handleDownload} size="lg">
@@ -201,7 +200,7 @@ export default function MergePage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-text-primary truncate">{file.name}</p>
                       <p className="text-sm text-text-secondary">
-                        {file.pageCount} {file.pageCount === 1 ? 'page' : 'pages'} • {formatFileSize(file.size)}
+                        {file.pageCount} {file.pageCount === 1 ? 'page' : 'pages'} - {formatFileSize(file.size)}
                       </p>
                     </div>
                     <button
@@ -226,7 +225,7 @@ export default function MergePage() {
               {/* Summary & Actions */}
               <div className="flex items-center justify-between pt-4 border-t border-border-light">
                 <div className="text-sm text-text-secondary">
-                  {files.length} files • {totalPages} pages • {formatFileSize(totalSize)}
+                  {files.length} files - {totalPages} pages - {formatFileSize(totalSize)}
                 </div>
                 <div className="flex gap-3">
                   <Button variant="ghost" onClick={handleReset}>
@@ -250,7 +249,7 @@ export default function MergePage() {
           <ol className="text-sm text-text-secondary space-y-1">
             <li>1. Upload two or more PDF files</li>
             <li>2. Drag to reorder if needed</li>
-            <li>3. Click &quot;Merge&quot; to combine</li>
+            <li>3. Click Merge to combine</li>
             <li>4. Download your merged PDF</li>
           </ol>
         </div>

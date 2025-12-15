@@ -4,9 +4,20 @@ import { useState, useCallback } from 'react';
 import { Image as ImageIcon, Download, ArrowLeft, FileArchive } from 'lucide-react';
 import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
-import { pdfToImages, createImagesZip, ConversionProgress, ImageOutput } from '@/lib/pdf/convert';
-import { getPDFPageCount } from '@/lib/pdf/utils';
 import { formatFileSize, downloadBlob } from '@/lib/utils';
+
+interface ConversionProgress {
+  current: number;
+  total: number;
+  percentage: number;
+  status: string;
+}
+
+interface ImageOutput {
+  data: Blob;
+  filename: string;
+  pageNumber: number;
+}
 
 type ImageFormat = 'png' | 'jpg';
 
@@ -34,6 +45,7 @@ export default function PDFToImagesPage() {
     }
 
     try {
+      const { getPDFPageCount } = await import('@/lib/pdf/utils');
       const count = await getPDFPageCount(droppedFile);
       setFile(droppedFile);
       setPageCount(count);
@@ -52,6 +64,7 @@ export default function PDFToImagesPage() {
     setError(null);
 
     try {
+      const { pdfToImages } = await import('@/lib/pdf/convert');
       const images = await pdfToImages(file, { format, dpi }, (p) => setProgress(p));
       setResults(images);
     } catch (err) {
@@ -67,8 +80,9 @@ export default function PDFToImagesPage() {
     if (results.length === 1) {
       downloadBlob(results[0].data, results[0].filename);
     } else {
+      const { createImagesZip } = await import('@/lib/pdf/convert');
       const zipData = await createImagesZip(results);
-      const blob = new Blob([zipData], { type: 'application/zip' });
+      const blob = new Blob([new Uint8Array(zipData)], { type: 'application/zip' });
       downloadBlob(blob, `${file.name.replace('.pdf', '')}_images.zip`);
     }
   };
@@ -194,7 +208,7 @@ export default function PDFToImagesPage() {
                 <div>
                   <p className="font-medium text-text-primary">{file.name}</p>
                   <p className="text-sm text-text-secondary">
-                    {pageCount} pages • {formatFileSize(file.size)}
+                    {pageCount} pages - {formatFileSize(file.size)}
                   </p>
                 </div>
                 <Button variant="ghost" onClick={handleReset}>

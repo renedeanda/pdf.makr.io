@@ -112,7 +112,7 @@ export function PageSelector({
             pdfUrl={pdfUrl}
             pageNumber={pageNumber}
             selected={selectedPages.includes(pageNumber)}
-            onClick={(e) => handlePageClick(pageNumber, e as unknown as React.MouseEvent)}
+            onClick={() => handlePageClick(pageNumber)}
             rotation={rotations.get(pageNumber) || 0}
             onRotate={mode === 'rotate' ? () => onRotate?.(pageNumber) : undefined}
             showRotateButton={mode === 'rotate'}

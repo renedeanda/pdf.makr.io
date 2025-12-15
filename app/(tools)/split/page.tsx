@@ -1,14 +1,18 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { Scissors, Download, ArrowLeft, FileDown } from 'lucide-react';
 import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
 import { PageSelector } from '@/components/pdf';
-import { splitPDF, extractPages, createZipFromPDFs, SplitProgress } from '@/lib/pdf/split';
-import { getPDFPageCount, downloadPDF, downloadZip } from '@/lib/pdf/utils';
 import { formatFileSize } from '@/lib/utils';
 import type { PageRange } from '@/types/pdf';
+
+interface SplitProgress {
+  current: number;
+  total: number;
+  percentage: number;
+}
 
 type SplitMode = 'range' | 'extract' | 'each';
 
@@ -32,6 +36,7 @@ export default function SplitPage() {
     }
 
     try {
+      const { getPDFPageCount } = await import('@/lib/pdf/utils');
       const count = await getPDFPageCount(droppedFile);
       setFile(droppedFile);
       setFileUrl(URL.createObjectURL(droppedFile));
@@ -52,6 +57,9 @@ export default function SplitPage() {
     setError(null);
 
     try {
+      const { splitPDF, extractPages, createZipFromPDFs } = await import('@/lib/pdf/split');
+      const { downloadPDF, downloadZip } = await import('@/lib/pdf/utils');
+
       if (splitMode === 'extract') {
         if (selectedPages.length === 0) {
           setError('Please select at least one page to extract');
@@ -70,14 +78,11 @@ export default function SplitPage() {
           downloadPDF(results[0].data, results[0].filename);
         }
       } else if (splitMode === 'each') {
-        // Split into individual pages
         const ranges: PageRange[] = Array.from(
           { length: pageCount },
           (_, i) => ({ start: i + 1, end: i + 1 })
         );
         const results = await splitPDF(file, ranges, (p) => setProgress(p));
-
-        // Create ZIP file
         const zipData = await createZipFromPDFs(results);
         downloadZip(zipData, `${file.name.replace('.pdf', '')}_split.zip`);
       }
@@ -137,7 +142,7 @@ export default function SplitPage() {
           </h2>
           <ProgressBar
             progress={progress.percentage}
-            status={progress.status || `Processing ${progress.current} of ${progress.total}`}
+            status={`Processing ${progress.current} of ${progress.total}`}
           />
         </div>
       )}
@@ -159,7 +164,7 @@ export default function SplitPage() {
             <div>
               <p className="font-medium text-text-primary">{file.name}</p>
               <p className="text-sm text-text-secondary">
-                {pageCount} pages • {formatFileSize(file.size)}
+                {pageCount} pages - {formatFileSize(file.size)}
               </p>
             </div>
             <Button variant="ghost" onClick={handleReset}>
