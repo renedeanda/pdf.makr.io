@@ -10,7 +10,8 @@ import {
   Trash2,
   Shield,
   Zap,
-  Lock,
+  Hash,
+  Stamp,
 } from 'lucide-react';
 import { ToolCard } from '@/components/ui/tool-card';
 import { Alert } from '@/components/ui/alert';
@@ -58,6 +59,18 @@ const tools = [
     description: 'Remove unwanted pages from your PDF',
     href: '/delete',
   },
+  {
+    icon: Hash,
+    title: 'Page Numbers',
+    description: 'Add page numbers to your PDF document',
+    href: '/page-numbers',
+  },
+  {
+    icon: Stamp,
+    title: 'Watermark',
+    description: 'Add text watermarks to PDF pages',
+    href: '/watermark',
+  },
 ];
 
 const features = [
@@ -72,7 +85,7 @@ const features = [
     description: 'No waiting for uploads or downloads. Processing happens instantly on your device.',
   },
   {
-    icon: Lock,
+    icon: Layers,
     title: 'No Limits',
     description: 'Process as many files as you want. No file size limits, no daily quotas.',
   },
