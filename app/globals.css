@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+:root {
+  /* Base - Warm Paper Tones */
+  --background: 254 252 247;
+  --foreground: 28 25 23;
+
+  /* Surfaces - Layered Paper */
+  --surface-50: 250 247 239;
+  --surface-100: 245 241 230;
+  --surface-200: 231 224 210;
+  --surface-300: 214 206 189;
+  --surface-400: 168 162 148;
+
+  /* Text Hierarchy - Warm Browns */
+  --text-primary: 28 25 23;
+  --text-secondary: 87 83 78;
+  --text-tertiary: 120 113 108;
+
+  /* Accent - Warm Orange/Amber */
+  --accent-50: 255 247 237;
+  --accent-100: 254 237 213;
+  --accent-200: 253 224 183;
+  --accent-500: 234 88 12;
+  --accent-600: 194 65 12;
+  --accent-700: 154 52 18;
+
+  /* Semantic */
+  --success: 21 128 61;
+  --warning: 161 98 7;
+  --error: 185 28 28;
+  --info: 30 64 175;
+
+  /* Borders */
+  --border-light: 245 241 230;
+  --border-medium: 231 224 210;
+  --border-strong: 214 206 189;
+}
+
+.dark {
+  /* Base - Warm Dark */
+  --background: 28 25 23;
+  --foreground: 250 247 239;
+
+  /* Surfaces - Layered Dark */
+  --surface-50: 38 35 33;
+  --surface-100: 50 46 43;
+  --surface-200: 68 64 60;
+  --surface-300: 87 83 78;
+  --surface-400: 120 113 108;
+
+  /* Text Hierarchy */
+  --text-primary: 250 247 239;
+  --text-secondary: 168 162 148;
+  --text-tertiary: 120 113 108;
+
+  /* Accent - Softer Orange */
+  --accent-50: 67 56 51;
+  --accent-100: 124 58 37;
+  --accent-200: 194 65 12;
+  --accent-500: 251 146 60;
+  --accent-600: 253 186 116;
+  --accent-700: 254 215 170;
+
+  /* Semantic - Muted */
+  --success: 74 222 128;
+  --warning: 251 191 36;
+  --error: 248 113 113;
+  --info: 96 165 250;
+
+  /* Borders */
+  --border-light: 50 46 43;
+  --border-medium: 68 64 60;
+  --border-strong: 87 83 78;
+}
+
+@theme inline {
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+
+  --color-surface-50: rgb(var(--surface-50));
+  --color-surface-100: rgb(var(--surface-100));
+  --color-surface-200: rgb(var(--surface-200));
+  --color-surface-300: rgb(var(--surface-300));
+  --color-surface-400: rgb(var(--surface-400));
+
+  --color-text-primary: rgb(var(--text-primary));
+  --color-text-secondary: rgb(var(--text-secondary));
+  --color-text-tertiary: rgb(var(--text-tertiary));
+
+  --color-accent-50: rgb(var(--accent-50));
+  --color-accent-100: rgb(var(--accent-100));
+  --color-accent-200: rgb(var(--accent-200));
+  --color-accent-500: rgb(var(--accent-500));
+  --color-accent-600: rgb(var(--accent-600));
+  --color-accent-700: rgb(var(--accent-700));
+
+  --color-success: rgb(var(--success));
+  --color-warning: rgb(var(--warning));
+  --color-error: rgb(var(--error));
+  --color-info: rgb(var(--info));
+
+  --color-border-light: rgb(var(--border-light));
+  --color-border-medium: rgb(var(--border-medium));
+  --color-border-strong: rgb(var(--border-strong));
+
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-geist-mono), 'SF Mono', Monaco, monospace;
+}
+
+body {
+  background: rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-family: var(--font-sans);
+}
+
+/* Smooth transitions for theme changes */
+html {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--surface-100));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--surface-300));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--surface-400));
+}
+
+/* Focus visible styles */
+*:focus-visible {
+  outline: 2px solid rgb(var(--accent-500));
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: rgb(var(--accent-500) / 0.2);
+  color: rgb(var(--text-primary));
+}
