@@ -68,7 +68,7 @@ export default function PDFToImagesPage() {
       downloadBlob(results[0].data, results[0].filename);
     } else {
       const zipData = await createImagesZip(results);
-      const blob = new Blob([zipData], { type: 'application/zip' });
+      const blob = new Blob([new Uint8Array(zipData)], { type: 'application/zip' });
       downloadBlob(blob, `${file.name.replace('.pdf', '')}_images.zip`);
     }
   };
