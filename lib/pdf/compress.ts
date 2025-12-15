@@ -1,5 +1,4 @@
 import { PDFDocument } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist';
 
 export type CompressionLevel = 'low' | 'medium' | 'high';
 
@@ -24,9 +23,13 @@ const qualitySettings: Record<CompressionLevel, number> = {
   high: 0.5,   // 50% quality - maximum compression
 };
 
-// Configure PDF.js worker
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Helper to get pdfjs with worker configured
+async function getPdfjsLib() {
+  const pdfjsLib = await import('pdfjs-dist');
+  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  }
+  return pdfjsLib;
 }
 
 export async function compressPDF(
@@ -34,6 +37,7 @@ export async function compressPDF(
   level: CompressionLevel = 'medium',
   onProgress?: (progress: CompressionProgress) => void
 ): Promise<CompressionResult> {
+  const pdfjsLib = await getPdfjsLib();
   const originalSize = file.size;
   const quality = qualitySettings[level];
 
