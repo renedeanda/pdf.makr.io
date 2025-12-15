@@ -35,6 +35,7 @@ export async function renderPageToCanvas(
   await page.render({
     canvasContext: context,
     viewport,
+    canvas,
   }).promise;
 }
 
@@ -60,6 +61,7 @@ export async function generateThumbnail(
   await page.render({
     canvasContext: context,
     viewport: scaledViewport,
+    canvas,
   }).promise;
 
   return canvas.toDataURL('image/jpeg', 0.8);
@@ -71,12 +73,12 @@ export async function loadPDFDocument(file: File): Promise<PDFDocument> {
 }
 
 export function createDownloadUrl(data: Uint8Array): string {
-  const blob = new Blob([data], { type: 'application/pdf' });
+  const blob = new Blob([new Uint8Array(data)], { type: 'application/pdf' });
   return URL.createObjectURL(blob);
 }
 
 export function downloadPDF(data: Uint8Array, filename: string): void {
-  const blob = new Blob([data], { type: 'application/pdf' });
+  const blob = new Blob([new Uint8Array(data)], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement('a');
@@ -89,7 +91,7 @@ export function downloadPDF(data: Uint8Array, filename: string): void {
 }
 
 export function downloadZip(data: Uint8Array, filename: string): void {
-  const blob = new Blob([data], { type: 'application/zip' });
+  const blob = new Blob([new Uint8Array(data)], { type: 'application/zip' });
   const url = URL.createObjectURL(blob);
 
   const a = document.createElement('a');

@@ -63,6 +63,7 @@ export function PageThumbnail({
         await page.render({
           canvasContext: context,
           viewport,
+          canvas,
         }).promise;
 
         setLoading(false);

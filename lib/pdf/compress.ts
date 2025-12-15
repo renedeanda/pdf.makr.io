@@ -77,6 +77,7 @@ export async function compressPDF(
     await page.render({
       canvasContext: context,
       viewport,
+      canvas,
     }).promise;
 
     // Convert to compressed JPEG

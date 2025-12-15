@@ -137,7 +137,7 @@ export default function SplitPage() {
           </h2>
           <ProgressBar
             progress={progress.percentage}
-            status={progress.status || `Processing ${progress.current} of ${progress.total}`}
+            status={`Processing ${progress.current} of ${progress.total}`}
           />
         </div>
       )}
