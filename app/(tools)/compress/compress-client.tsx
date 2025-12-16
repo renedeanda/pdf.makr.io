@@ -8,6 +8,7 @@ import { formatFileSize } from '@/lib/utils';
 import { useKeyboardShortcuts, commonShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { celebrateSuccess } from '@/lib/confetti';
 import { validateFile } from '@/lib/file-validation';
+import type { PDFAnalysis } from '@/lib/pdf/analyze';
 
 type CompressionLevel = 'low' | 'medium' | 'high';
 
@@ -36,9 +37,16 @@ export default function CompressClient() {
   const [file, setFile] = useState<File | null>(null);
   const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>('medium');
   const [processing, setProcessing] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState<CompressionProgress | null>(null);
   const [result, setResult] = useState<CompressionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<PDFAnalysis | null>(null);
+  const [levelPreviews, setLevelPreviews] = useState<Record<CompressionLevel, { willIncrease: boolean } | null>>({
+    low: null,
+    medium: null,
+    high: null,
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileDrop = useCallback(async (files: File[]) => {
@@ -61,16 +69,60 @@ export default function CompressClient() {
 
     setFile(droppedFile);
     setResult(null);
+    setAnalysis(null);
+    setLevelPreviews({ low: null, medium: null, high: null });
 
-    // Show warning if file is large
-    if (validation.warning) {
-      let warningMessage = validation.warning;
-      if (validation.estimatedProcessingTime) {
-        warningMessage += ` Estimated time: ${validation.estimatedProcessingTime}.`;
+    // Analyze PDF for compression potential
+    setAnalyzing(true);
+    try {
+      const { analyzePDF, previewCompression } = await import('@/lib/pdf/analyze');
+      const pdfAnalysis = await analyzePDF(droppedFile);
+      setAnalysis(pdfAnalysis);
+
+      // Set recommended level if available
+      if (pdfAnalysis.recommendation.recommendedLevel) {
+        setCompressionLevel(pdfAnalysis.recommendation.recommendedLevel);
       }
-      setError(warningMessage);
-    } else {
-      setError(null);
+
+      // Preview each compression level to check if it increases size
+      const previews = await Promise.all([
+        previewCompression(droppedFile, 'low'),
+        previewCompression(droppedFile, 'medium'),
+        previewCompression(droppedFile, 'high'),
+      ]);
+
+      setLevelPreviews({
+        low: { willIncrease: previews[0].willIncrease },
+        medium: { willIncrease: previews[1].willIncrease },
+        high: { willIncrease: previews[2].willIncrease },
+      });
+
+      // Show recommendation message
+      if (!pdfAnalysis.recommendation.shouldCompress) {
+        setError(pdfAnalysis.recommendation.reason);
+      } else if (validation.warning) {
+        let warningMessage = validation.warning;
+        if (validation.estimatedProcessingTime) {
+          warningMessage += ` Estimated time: ${validation.estimatedProcessingTime}.`;
+        }
+        setError(warningMessage);
+      } else {
+        setError(null);
+      }
+    } catch (err) {
+      console.error('PDF analysis failed:', err);
+      // Continue without analysis
+      if (validation.warning) {
+        let warningMessage = validation.warning;
+        if (validation.estimatedProcessingTime) {
+          warningMessage += ` Estimated time: ${validation.estimatedProcessingTime}.`;
+        }
+        setError(warningMessage);
+      } else {
+        setError(null);
+      }
+    } finally {
+      setAnalyzing(false);
     }
   }, []);
 
@@ -264,6 +316,18 @@ export default function CompressClient() {
                 fileType="pdf"
               />
             </>
+          ) : analyzing ? (
+            <div className="rounded-xl border border-border-medium bg-surface-50 p-8">
+              <h2 className="text-lg font-semibold text-text-primary mb-4 text-center">
+                Analyzing PDF...
+              </h2>
+              <div className="flex items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent-500 border-t-transparent" />
+              </div>
+              <p className="text-sm text-text-secondary text-center mt-4">
+                Checking compression potential
+              </p>
+            </div>
           ) : (
             <div className="space-y-6">
               {/* File Info */}
@@ -272,6 +336,9 @@ export default function CompressClient() {
                   <p className="font-medium text-text-primary truncate">{file.name}</p>
                   <p className="text-sm text-text-secondary">
                     {formatFileSize(file.size)}
+                    {analysis && (
+                      <> • {analysis.pageCount} page{analysis.pageCount !== 1 ? 's' : ''}</>
+                    )}
                   </p>
                 </div>
                 <Button variant="ghost" onClick={handleReset} className="shrink-0">
@@ -279,28 +346,85 @@ export default function CompressClient() {
                 </Button>
               </div>
 
+              {/* Analysis Results */}
+              {analysis && (
+                <Alert
+                  variant={analysis.recommendation.shouldCompress ? "info" : "warning"}
+                  className="mb-4"
+                >
+                  <div className="space-y-1">
+                    <p className="font-medium">
+                      {analysis.recommendation.shouldCompress ? '✓ ' : '⚠️ '}
+                      {analysis.recommendation.reason}
+                    </p>
+                    {analysis.recommendation.shouldCompress && analysis.recommendation.estimatedSavings && (
+                      <p className="text-sm opacity-90">
+                        Estimated savings: ~{analysis.recommendation.estimatedSavings}%
+                        {analysis.recommendation.recommendedLevel && (
+                          <> (using {analysis.recommendation.recommendedLevel} compression)</>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </Alert>
+              )}
+
               {/* Compression Level Selector */}
               <div className="space-y-3">
                 <label className="text-sm font-medium text-text-primary">
                   Compression Level
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {compressionLevels.map((level) => (
-                    <button
-                      key={level.level}
-                      onClick={() => setCompressionLevel(level.level)}
-                      aria-label={`${level.label} compression: ${level.description}`}
-                      aria-pressed={compressionLevel === level.level}
-                      className={`p-4 rounded-xl border-2 text-left transition-all ${
-                        compressionLevel === level.level
-                          ? 'border-accent-500 bg-accent-50 dark:bg-accent-100/10'
-                          : 'border-border-medium hover:border-accent-500/50'
-                      }`}
-                    >
-                      <p className="font-medium text-text-primary">{level.label}</p>
-                      <p className="text-sm text-text-secondary mt-1">{level.description}</p>
-                    </button>
-                  ))}
+                  {compressionLevels.map((level) => {
+                    const preview = levelPreviews[level.level];
+                    const willIncrease = preview?.willIncrease ?? false;
+                    const isRecommended = analysis?.recommendation.recommendedLevel === level.level;
+                    const isDisabled = willIncrease && !analysis?.recommendation.shouldCompress;
+
+                    return (
+                      <button
+                        key={level.level}
+                        onClick={() => !isDisabled && setCompressionLevel(level.level)}
+                        disabled={isDisabled}
+                        aria-label={`${level.label} compression: ${level.description}`}
+                        aria-pressed={compressionLevel === level.level}
+                        className={`p-4 rounded-xl border-2 text-left transition-all relative ${
+                          isDisabled
+                            ? 'opacity-50 cursor-not-allowed border-border-light'
+                            : compressionLevel === level.level
+                            ? 'border-accent-500 bg-accent-50 dark:bg-accent-100/10'
+                            : 'border-border-medium hover:border-accent-500/50'
+                        }`}
+                      >
+                        {isRecommended && !isDisabled && (
+                          <span className="absolute -top-2 -right-2 bg-accent-600 text-white text-xs px-2 py-0.5 rounded-full">
+                            Recommended
+                          </span>
+                        )}
+                        <p className="font-medium text-text-primary">
+                          {level.label}
+                          {willIncrease && (
+                            <span className="text-amber-600 ml-1" title="May increase file size">
+                              ⚠️
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-sm text-text-secondary mt-1">
+                          {level.description}
+                        </p>
+                        {willIncrease && !isDisabled && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            May increase size
+                          </p>
+                        )}
+                        {isDisabled && (
+                          <p className="text-xs text-text-tertiary mt-1">
+                            Not recommended
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
