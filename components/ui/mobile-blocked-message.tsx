@@ -56,9 +56,9 @@ export function MobileBlockedMessage({ toolName, children }: MobileBlockedMessag
           Mobile browsers have limitations that prevent these operations from working reliably.
         </Alert>
 
-        <div className="bg-surface-50 dark:bg-surface-100 rounded-xl p-6 space-y-4">
+        <div className="bg-surface-100 dark:bg-surface-100 rounded-xl p-6 space-y-4 border border-border-medium">
           <h2 className="font-semibold text-text-primary flex items-center gap-2">
-            <Smartphone className="h-5 w-5 text-accent-600" />
+            <Smartphone className="h-5 w-5 text-accent-600 dark:text-accent-500" />
             Try These Mobile-Friendly Tools Instead:
           </h2>
           <div className="grid gap-3">
@@ -72,7 +72,7 @@ export function MobileBlockedMessage({ toolName, children }: MobileBlockedMessag
               <Link
                 key={tool.href}
                 href={tool.href}
-                className="block p-3 rounded-lg border border-border-medium hover:border-accent-500 hover:bg-surface-100 transition-all"
+                className="block p-3 rounded-lg border border-border-medium bg-white dark:bg-surface-50 hover:border-accent-500 hover:bg-accent-50 dark:hover:bg-accent-900/10 transition-all"
               >
                 <span className="text-sm font-medium text-text-primary">{tool.name}</span>
               </Link>
@@ -88,7 +88,7 @@ export function MobileBlockedMessage({ toolName, children }: MobileBlockedMessag
           </Link>
         </div>
 
-        <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-900/30">
+        <div className="mt-8 p-4 bg-blue-100/80 dark:bg-blue-950/20 rounded-lg border border-blue-300 dark:border-blue-900/30">
           <p className="text-sm text-blue-900 dark:text-blue-100">
             <strong>Tip:</strong> You can access {toolName} from any desktop computer or laptop.
             Your files are processed locally in the browser, so your data stays private even on public computers.

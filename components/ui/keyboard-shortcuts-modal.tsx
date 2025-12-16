@@ -27,9 +27,17 @@ const shortcuts: Shortcut[] = [
 export function KeyboardShortcutsModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Detect Mac
     setIsMac(navigator.platform.toLowerCase().includes('mac'));
+
+    // Detect mobile devices - keyboard shortcuts aren't useful on mobile
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const isSmallScreen = window.innerWidth < 768;
+    setIsMobile(isMobileDevice || isSmallScreen);
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === '?' && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -44,6 +52,11 @@ export function KeyboardShortcutsModal() {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
+
+  // Don't render on mobile devices
+  if (isMobile) {
+    return null;
+  }
 
   if (!isOpen) {
     return (
