@@ -1,18 +1,33 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Set headers for WASM (cross-origin isolation for SharedArrayBuffer support)
+  // Set headers for WASM and PDF.js workers
   async headers() {
     return [
       {
+        // COEP/COOP headers for SharedArrayBuffer support (desktop browsers)
         source: '/:path*',
         headers: [
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'credentialless',
+            value: 'require-corp', // More compatible than 'credentialless' for iOS
           },
           {
             key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
+          },
+        ],
+      },
+      {
+        // Specific headers for worker files to ensure they load properly
+        source: '/pdf.worker.:path*.mjs',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/javascript',
+          },
+          {
+            key: 'Cross-Origin-Resource-Policy',
             value: 'same-origin',
           },
         ],

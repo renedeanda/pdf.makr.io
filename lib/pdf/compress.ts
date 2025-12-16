@@ -1,5 +1,6 @@
 import { PDFDocument } from 'pdf-lib';
 import { PerformanceMonitor, MemoryManager } from '@/lib/performance';
+import { getPdfjsLib, checkBrowserSupport } from './utils-pdfjs';
 
 export type CompressionLevel = 'low' | 'medium' | 'high';
 
@@ -30,15 +31,6 @@ function isMobileDevice() {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
-// Helper to get pdfjs with worker configured
-async function getPdfjsLib() {
-  const pdfjsLib = await import('pdfjs-dist');
-  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-  }
-  return pdfjsLib;
-}
-
 export async function compressPDF(
   file: File,
   level: CompressionLevel = 'medium',
@@ -48,6 +40,12 @@ export async function compressPDF(
 
   try {
     console.log('Starting PDF compression...', { fileSize: file.size, level });
+
+    // Check browser support
+    const browserCheck = checkBrowserSupport();
+    if (!browserCheck.supported) {
+      throw new Error(browserCheck.message || 'Browser not supported');
+    }
 
     // Check memory availability
     if (!MemoryManager.checkMemoryAvailable()) {

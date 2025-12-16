@@ -1,14 +1,6 @@
 import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
-
-// Helper to get pdfjs with worker configured
-async function getPdfjsLib() {
-  const pdfjsLib = await import('pdfjs-dist');
-  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-  }
-  return pdfjsLib;
-}
+import { getPdfjsLib, checkBrowserSupport } from './utils-pdfjs';
 
 export interface ConversionProgress {
   current: number;
@@ -34,6 +26,12 @@ export async function pdfToImages(
 ): Promise<ImageOutput[]> {
   try {
     console.log('Starting PDF to images conversion...', { fileSize: file.size, format: options.format, dpi: options.dpi });
+
+    // Check browser support
+    const browserCheck = checkBrowserSupport();
+    if (!browserCheck.supported) {
+      throw new Error(browserCheck.message || 'Browser not supported');
+    }
 
     onProgress?.({
       current: 0,
