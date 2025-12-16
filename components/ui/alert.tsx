@@ -28,10 +28,10 @@ export function Alert({
   };
 
   const styles = {
-    info: 'border border-blue-200 bg-blue-50 dark:border-info/30 dark:bg-blue-950/20',
-    success: 'border border-green-200 bg-green-50 dark:border-success/30 dark:bg-green-950/20',
-    warning: 'border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-950/20',
-    error: 'border border-red-200 bg-red-50 dark:border-error/30 dark:bg-red-950/20',
+    info: 'border border-blue-200 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-50/10',
+    success: 'border border-green-200 bg-green-50 dark:border-green-500/30 dark:bg-green-50/10',
+    warning: 'border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-50/10',
+    error: 'border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-50/10',
     privacy: 'border border-accent-200 bg-accent-50 dark:border-accent-500/30 dark:bg-accent-50/10',
   };
 
