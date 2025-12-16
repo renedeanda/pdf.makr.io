@@ -52,11 +52,11 @@ export function Alert({
   };
 
   const descStyles = {
-    info: 'text-blue-800 dark:text-blue-300',
-    success: 'text-green-800 dark:text-green-300',
-    warning: 'text-amber-800 dark:text-amber-300',
-    error: 'text-red-800 dark:text-red-300',
-    privacy: 'text-accent-700 dark:text-accent-300',
+    info: 'text-blue-900 dark:text-blue-300',
+    success: 'text-green-900 dark:text-green-300',
+    warning: 'text-amber-900 dark:text-amber-300',
+    error: 'text-red-900 dark:text-red-300',
+    privacy: 'text-accent-900 dark:text-accent-300',
   };
 
   const Icon = icons[variant];
