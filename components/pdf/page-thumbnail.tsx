@@ -47,14 +47,19 @@ export function PageThumbnail({
           pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
         }
 
+        console.log('Loading PDF for thumbnail:', pageNumber);
+
         const loadingTask = pdfjsLib.getDocument(pdfUrl);
         const pdf = await loadingTask.promise;
         if (cancelled) return;
 
+        console.log('PDF loaded, rendering page', pageNumber);
+
         const page = await pdf.getPage(pageNumber);
         if (cancelled) return;
 
-        const viewport = page.getViewport({ scale: 0.3, rotation });
+        // Increased scale from 0.3 to 0.5 for better visibility
+        const viewport = page.getViewport({ scale: 0.5, rotation });
 
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -72,11 +77,12 @@ export function PageThumbnail({
         }).promise;
 
         if (!cancelled) {
+          console.log('Page', pageNumber, 'rendered successfully');
           setLoading(false);
         }
       } catch (err) {
         if (!cancelled) {
-          console.error('Failed to render thumbnail:', err);
+          console.error('Failed to render thumbnail for page', pageNumber, ':', err);
           setError(true);
           setLoading(false);
         }
@@ -120,8 +126,9 @@ export function PageThumbnail({
 
       {/* Error state */}
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-surface-100 text-text-tertiary text-xs">
-          Preview failed
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-100 text-text-tertiary text-xs p-2 gap-2">
+          <div>Preview failed</div>
+          <div className="text-[10px]">Check console</div>
         </div>
       )}
 

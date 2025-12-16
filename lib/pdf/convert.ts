@@ -32,26 +32,41 @@ export async function pdfToImages(
   },
   onProgress?: (progress: ConversionProgress) => void
 ): Promise<ImageOutput[]> {
-  const pdfjsLib = await getPdfjsLib();
-  const arrayBuffer = await file.arrayBuffer();
-  const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-  const totalPages = pdfDoc.numPages;
-  const pages = options.pageNumbers || Array.from({ length: totalPages }, (_, i) => i + 1);
-  const scale = options.dpi / 72; // PDF is 72 DPI by default
-
-  const images: ImageOutput[] = [];
-  const baseName = file.name.replace('.pdf', '');
-
-  for (let i = 0; i < pages.length; i++) {
-    const pageNum = pages[i];
+  try {
+    console.log('Starting PDF to images conversion...', { fileSize: file.size, format: options.format, dpi: options.dpi });
 
     onProgress?.({
-      current: i + 1,
-      total: pages.length,
-      percentage: Math.round(((i + 1) / pages.length) * 100),
-      status: `Converting page ${pageNum}`,
+      current: 0,
+      total: 1,
+      percentage: 5,
+      status: 'Loading PDF...',
     });
+
+    const pdfjsLib = await getPdfjsLib();
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    const totalPages = pdfDoc.numPages;
+    const pages = options.pageNumbers || Array.from({ length: totalPages }, (_, i) => i + 1);
+    const scale = options.dpi / 72; // PDF is 72 DPI by default
+
+    console.log('PDF loaded, converting', pages.length, 'pages at', options.dpi, 'DPI');
+
+    const images: ImageOutput[] = [];
+    const baseName = file.name.replace('.pdf', '');
+
+    for (let i = 0; i < pages.length; i++) {
+      const pageNum = pages[i];
+      const baseProgress = 5 + Math.round((i / pages.length) * 90);
+
+      onProgress?.({
+        current: i + 1,
+        total: pages.length,
+        percentage: baseProgress,
+        status: `Converting page ${pageNum} of ${pages.length}`,
+      });
+
+      console.log(`Converting page ${pageNum}`);
 
     const page = await pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale });
@@ -96,9 +111,29 @@ export async function pdfToImages(
     });
 
     canvas.remove();
+
+    // Yield to main thread to allow UI updates (critical for mobile)
+    await new Promise(resolve => setTimeout(resolve, 0));
   }
 
+  onProgress?.({
+    current: pages.length,
+    total: pages.length,
+    percentage: 100,
+    status: 'Complete!',
+  });
+
+  console.log('Conversion complete!', images.length, 'images created');
+
   return images;
+  } catch (error) {
+    console.error('PDF to images conversion error:', error);
+    throw new Error(
+      error instanceof Error
+        ? `Conversion failed: ${error.message}`
+        : 'Failed to convert PDF to images. The file may be too large or corrupted.'
+    );
+  }
 }
 
 export async function imagesToPDF(
