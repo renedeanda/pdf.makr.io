@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Monitor, Smartphone, AlertTriangle } from 'lucide-react';
+import { Monitor, Smartphone } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from './button';
-import { Alert } from './alert';
 
 interface MobileBlockedMessageProps {
   toolName: string;
@@ -50,12 +49,6 @@ export function MobileBlockedMessage({ toolName, children }: MobileBlockedMessag
           </p>
         </div>
 
-        <Alert variant="warning" className="mb-6">
-          <strong>Why this tool isn't available on mobile:</strong>{' '}
-          {toolName} uses advanced PDF processing that requires significant memory and processing power.
-          Mobile browsers have limitations that prevent these operations from working reliably.
-        </Alert>
-
         <div className="bg-surface-100 dark:bg-surface-100 rounded-xl p-6 space-y-4 border border-border-medium">
           <h2 className="font-semibold text-text-primary flex items-center gap-2">
             <Smartphone className="h-5 w-5 text-accent-600 dark:text-accent-500" />
@@ -86,13 +79,6 @@ export function MobileBlockedMessage({ toolName, children }: MobileBlockedMessag
               View All Tools
             </Button>
           </Link>
-        </div>
-
-        <div className="mt-8 p-4 bg-blue-100/80 dark:bg-blue-950/20 rounded-lg border border-blue-300 dark:border-blue-900/30">
-          <p className="text-sm text-blue-900 dark:text-blue-100">
-            <strong>Tip:</strong> You can access {toolName} from any desktop computer or laptop.
-            Your files are processed locally in the browser, so your data stays private even on public computers.
-          </p>
         </div>
       </div>
     );

@@ -46,6 +46,17 @@ export default function RotateClient() {
     }
   }, []);
 
+  const handleLoadSample = async () => {
+    try {
+      const response = await fetch('/sample.pdf');
+      const blob = await response.blob();
+      const sampleFile = new File([blob], 'sample.pdf', { type: 'application/pdf' });
+      await handleFileDrop([sampleFile]);
+    } catch (err) {
+      setError('Failed to load sample file');
+    }
+  };
+
   const rotateSelected = (angle: RotationAngle) => {
     if (selectedPages.length === 0) return;
 
@@ -172,11 +183,23 @@ export default function RotateClient() {
 
       {/* Upload State */}
       {!file && !processing && (
-        <UploadZone
-          onDrop={handleFileDrop}
-          multiple={false}
-          fileType="pdf"
-        />
+        <>
+          <UploadZone
+            onDrop={handleFileDrop}
+            multiple={false}
+            fileType="pdf"
+          />
+          <div className="mt-6 text-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLoadSample}
+              className="text-accent-600 hover:text-accent-700"
+            >
+              Try with sample file
+            </Button>
+          </div>
+        </>
       )}
 
       {/* Edit State */}

@@ -1,31 +1,71 @@
-/**
- * Script to generate OG images for all pages
- * Run with: node scripts/generate-og-images.js
- *
- * This creates placeholder OG images. For production, consider using:
- * - @vercel/og for dynamic generation
- * - https://og-playground.vercel.app/ for design
- * - Figma/Canva for custom designs
- */
-
 const fs = require('fs');
 const path = require('path');
 
 const tools = [
-  { name: 'og-image', title: 'PDF Tools - Free Online PDF Editor' },
-  { name: 'og-compress', title: 'Compress PDF - Reduce File Size' },
-  { name: 'og-delete', title: 'Delete PDF Pages - Remove Unwanted Pages' },
-  { name: 'og-images-to-pdf', title: 'Images to PDF - Convert JPG, PNG to PDF' },
-  { name: 'og-merge', title: 'Merge PDF Files - Combine Multiple PDFs' },
-  { name: 'og-page-numbers', title: 'Add Page Numbers to PDF' },
-  { name: 'og-pdf-to-images', title: 'PDF to Images - Convert PDF to PNG/JPG' },
-  { name: 'og-rotate', title: 'Rotate PDF Pages - Change Page Orientation' },
-  { name: 'og-split', title: 'Split PDF - Extract Pages from PDF' },
-  { name: 'og-watermark', title: 'Add Watermark to PDF' },
+  { name: 'merge', title: 'Merge PDF Files', subtitle: 'Combine Multiple PDFs', icon: 'M12 6l-6 6m0 0l6 6m-6-6h12' },
+  { name: 'split', title: 'Split PDF', subtitle: 'Extract Pages or Split into Multiple Files', icon: 'M8 7h12M8 12h12m-12 5h12' },
+  { name: 'compress', title: 'Compress PDF', subtitle: 'Reduce PDF File Size', icon: 'M19 14l-7 7m0 0l-7-7m7 7V3' },
+  { name: 'delete', title: 'Delete PDF Pages', subtitle: 'Remove Unwanted Pages', icon: 'M19 7l-7 7-7-7' },
+  { name: 'rotate', title: 'Rotate PDF Pages', subtitle: 'Change Page Orientation', icon: 'M4 4v5h5m10 6v5h-5M21 4a16 16 0 01-5 11M4 20a16 16 0 015-11' },
+  { name: 'watermark', title: 'Add Watermark', subtitle: 'Protect Your PDFs', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4' },
+  { name: 'page-numbers', title: 'Add Page Numbers', subtitle: 'Number Your PDF Pages', icon: 'M7 20h10M7 16h10M7 12h10' },
+  { name: 'pdf-to-images', title: 'PDF to Images', subtitle: 'Convert PDF Pages to PNG/JPG', icon: 'M4 16l4-4 4 4m-4-4v12M20 8v12' },
+  { name: 'images-to-pdf', title: 'Images to PDF', subtitle: 'Convert Images to PDF', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' },
+  { name: 'image', title: 'PDF Tools', subtitle: 'Free Online PDF Editor', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
 ];
 
-// Create SVG template for OG images (1200x630)
-function createOGImageSVG(title) {
+function wrapText(text, maxLength) {
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    if (testLine.length > maxLength && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+}
+
+function generateSVG(tool) {
+  const titleLines = wrapText(tool.title, 25);
+  const subtitleLines = wrapText(tool.subtitle, 40);
+
+  // Calculate vertical positioning with more spacing
+  const baseY = 330;
+  const titleSpacing = 75;
+  const subtitleSpacing = 60;
+  const gapBetweenTitleSubtitle = 50;
+
+  const totalTitleHeight = (titleLines.length - 1) * titleSpacing;
+  const totalSubtitleHeight = (subtitleLines.length - 1) * subtitleSpacing;
+
+  const titleStartY = baseY - (totalTitleHeight / 2);
+  const subtitleStartY = titleStartY + totalTitleHeight + gapBetweenTitleSubtitle;
+
+  // Generate title text elements
+  const titleTexts = titleLines.map((line, i) =>
+    `    <text x="600" y="${titleStartY + (i * titleSpacing)}" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="600" fill="#57534e" text-anchor="middle">
+      ${line}
+    </text>`
+  ).join('\n');
+
+  // Generate subtitle text elements
+  const subtitleTexts = subtitleLines.map((line, i) =>
+    `    <text x="600" y="${subtitleStartY + (i * subtitleSpacing)}" font-family="system-ui, -apple-system, sans-serif" font-size="32" fill="#78716c" text-anchor="middle">
+      ${line}
+    </text>`
+  ).join('\n');
+
   return `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <!-- Background with gradient -->
   <defs>
@@ -47,51 +87,58 @@ function createOGImageSVG(title) {
   <!-- Border -->
   <rect x="40" y="40" width="1120" height="550" fill="none" stroke="#d97706" stroke-width="2" rx="12"/>
 
-  <!-- Logo/Brand area -->
-  <text x="600" y="180" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="bold" fill="#292524" text-anchor="middle">
-    pdf.makr.io
-  </text>
+  <!-- PDF Document Icon (Favicon style) -->
+  <circle cx="600" cy="180" r="65" fill="url(#iconGradient)"/>
 
-  <!-- Title -->
-  <text x="600" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="600" fill="#57534e" text-anchor="middle">
-    ${escapeXml(title)}
-  </text>
+  <defs>
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ea580c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fb923c;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- PDF document shape -->
+  <g transform="translate(600, 180)">
+    <!-- White document -->
+    <path d="M-25,-35 L15,-35 L25,-25 L25,35 L-25,35 Z" fill="#ffffff" stroke="none"/>
+    <path d="M-25,-35 L15,-35 L25,-25 L25,35 L-25,35 Z" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Corner fold -->
+    <path d="M15,-35 L15,-25 L25,-25" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Lines representing text -->
+    <line x1="-15" y1="-10" x2="15" y2="-10" stroke="#ea580c" stroke-width="2"/>
+    <line x1="-15" y1="0" x2="15" y2="0" stroke="#ea580c" stroke-width="2"/>
+    <line x1="-15" y1="10" x2="10" y2="10" stroke="#ea580c" stroke-width="2"/>
+    <line x1="-15" y1="20" x2="15" y2="20" stroke="#ea580c" stroke-width="2"/>
+  </g>
+
+  <!-- Title with text wrapping -->
+${titleTexts}
+
+  <!-- Subtitle with text wrapping -->
+${subtitleTexts}
 
   <!-- Tagline -->
-  <text x="600" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#78716c" text-anchor="middle">
+  <text x="600" y="540" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#78716c" text-anchor="middle">
     100% Private • Browser-Based • Free Forever
   </text>
 
   <!-- Bottom accent -->
-  <rect x="400" y="500" width="400" height="4" fill="#d97706" rx="2"/>
+  <rect x="400" y="575" width="400" height="4" fill="#d97706" rx="2"/>
 </svg>`;
 }
 
-function escapeXml(text) {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-// Generate all OG images
 const publicDir = path.join(__dirname, '..', 'public');
 
-console.log('Generating OG images...\n');
+console.log('Generating OG image SVGs...\n');
 
-tools.forEach(({ name, title }) => {
-  const svg = createOGImageSVG(title);
-  const filename = `${name}.svg`;
-  const filepath = path.join(publicDir, filename);
-
-  fs.writeFileSync(filepath, svg);
-  console.log(`✓ Created ${filename}`);
+tools.forEach(tool => {
+  const svg = generateSVG(tool);
+  const svgPath = path.join(publicDir, `og-${tool.name}.svg`);
+  fs.writeFileSync(svgPath, svg);
+  console.log(`✓ Generated og-${tool.name}.svg`);
 });
 
-console.log('\n✨ All OG images generated!');
-console.log('\nNote: These are SVG placeholders. For production:');
-console.log('- Convert to PNG (1200x630) using: https://cloudconvert.com/svg-to-png');
-console.log('- Or use @vercel/og for dynamic generation');
-console.log('- Or create custom designs in Figma/Canva\n');
+console.log('\n✓ All OG image SVGs generated!');
+console.log('Run: node scripts/convert-images.js to convert to PNG');

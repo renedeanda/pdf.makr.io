@@ -149,19 +149,6 @@ export default function DeleteClient() {
             </Button>
           </div>
 
-          {/* Warning if many pages selected */}
-          {selectedPages.length > 0 && selectedPages.length >= pageCount - 1 && (
-            <Alert variant="warning">
-              <AlertTriangle className="h-4 w-4 inline mr-2" />
-              You can delete at most {pageCount - 1} pages. At least one page must remain.
-            </Alert>
-          )}
-
-          {/* Instructions */}
-          <Alert variant="info">
-            Select the pages you want to <strong>delete</strong>. Selected pages will be removed from the PDF.
-          </Alert>
-
           {/* Page Selection */}
           <PageSelector
             pdfUrl={fileUrl}
