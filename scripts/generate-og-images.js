@@ -2,16 +2,16 @@ const fs = require('fs');
 const path = require('path');
 
 const tools = [
-  { name: 'merge', title: 'Merge PDF Files', subtitle: 'Combine Multiple PDFs' },
-  { name: 'split', title: 'Split PDF', subtitle: 'Extract Pages or Split into Multiple Files' },
-  { name: 'compress', title: 'Compress PDF', subtitle: 'Reduce PDF File Size' },
-  { name: 'delete', title: 'Delete PDF Pages', subtitle: 'Remove Unwanted Pages' },
-  { name: 'rotate', title: 'Rotate PDF Pages', subtitle: 'Change Page Orientation' },
-  { name: 'watermark', title: 'Add Watermark', subtitle: 'Protect Your PDFs' },
-  { name: 'page-numbers', title: 'Add Page Numbers', subtitle: 'Number Your PDF Pages' },
-  { name: 'pdf-to-images', title: 'PDF to Images', subtitle: 'Convert PDF Pages to PNG/JPG' },
-  { name: 'images-to-pdf', title: 'Images to PDF', subtitle: 'Convert Images to PDF' },
-  { name: 'image', title: 'PDF Tools', subtitle: 'Free Online PDF Editor' },
+  { name: 'merge', title: 'Merge PDF Files', subtitle: 'Combine Multiple PDFs', icon: 'M12 6l-6 6m0 0l6 6m-6-6h12' },
+  { name: 'split', title: 'Split PDF', subtitle: 'Extract Pages or Split into Multiple Files', icon: 'M8 7h12M8 12h12m-12 5h12' },
+  { name: 'compress', title: 'Compress PDF', subtitle: 'Reduce PDF File Size', icon: 'M19 14l-7 7m0 0l-7-7m7 7V3' },
+  { name: 'delete', title: 'Delete PDF Pages', subtitle: 'Remove Unwanted Pages', icon: 'M19 7l-7 7-7-7' },
+  { name: 'rotate', title: 'Rotate PDF Pages', subtitle: 'Change Page Orientation', icon: 'M4 4v5h5m10 6v5h-5M21 4a16 16 0 01-5 11M4 20a16 16 0 015-11' },
+  { name: 'watermark', title: 'Add Watermark', subtitle: 'Protect Your PDFs', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4' },
+  { name: 'page-numbers', title: 'Add Page Numbers', subtitle: 'Number Your PDF Pages', icon: 'M7 20h10M7 16h10M7 12h10' },
+  { name: 'pdf-to-images', title: 'PDF to Images', subtitle: 'Convert PDF Pages to PNG/JPG', icon: 'M4 16l4-4 4 4m-4-4v12M20 8v12' },
+  { name: 'images-to-pdf', title: 'Images to PDF', subtitle: 'Convert Images to PDF', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' },
+  { name: 'image', title: 'PDF Tools', subtitle: 'Free Online PDF Editor', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
 ];
 
 function wrapText(text, maxLength) {
@@ -40,11 +40,11 @@ function generateSVG(tool) {
   const titleLines = wrapText(tool.title, 25);
   const subtitleLines = wrapText(tool.subtitle, 40);
 
-  // Calculate vertical positioning
-  const baseY = 260;
-  const titleSpacing = 65;
-  const subtitleSpacing = 50;
-  const gapBetweenTitleSubtitle = 35;
+  // Calculate vertical positioning with more spacing
+  const baseY = 280;
+  const titleSpacing = 75;
+  const subtitleSpacing = 60;
+  const gapBetweenTitleSubtitle = 50;
 
   const totalTitleHeight = (titleLines.length - 1) * titleSpacing;
   const totalSubtitleHeight = (subtitleLines.length - 1) * subtitleSpacing;
@@ -87,10 +87,13 @@ function generateSVG(tool) {
   <!-- Border -->
   <rect x="40" y="40" width="1120" height="550" fill="none" stroke="#d97706" stroke-width="2" rx="12"/>
 
-  <!-- Logo/Brand area -->
-  <text x="600" y="140" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="bold" fill="#292524" text-anchor="middle">
-    pdf.makr.io
-  </text>
+  <!-- Icon circle background -->
+  <circle cx="600" cy="180" r="60" fill="#ea580c" opacity="0.1"/>
+
+  <!-- Tool icon -->
+  <g transform="translate(600, 180)" stroke="#ea580c" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="${tool.icon}" transform="translate(-12, -12) scale(2)"/>
+  </g>
 
   <!-- Title with text wrapping -->
 ${titleTexts}
@@ -99,12 +102,12 @@ ${titleTexts}
 ${subtitleTexts}
 
   <!-- Tagline -->
-  <text x="600" y="520" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#78716c" text-anchor="middle">
+  <text x="600" y="540" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#78716c" text-anchor="middle">
     100% Private • Browser-Based • Free Forever
   </text>
 
   <!-- Bottom accent -->
-  <rect x="400" y="560" width="400" height="4" fill="#d97706" rx="2"/>
+  <rect x="400" y="575" width="400" height="4" fill="#d97706" rx="2"/>
 </svg>`;
 }
 
