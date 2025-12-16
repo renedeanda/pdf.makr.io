@@ -87,12 +87,30 @@ function generateSVG(tool) {
   <!-- Border -->
   <rect x="40" y="40" width="1120" height="550" fill="none" stroke="#d97706" stroke-width="2" rx="12"/>
 
-  <!-- Icon circle background -->
-  <circle cx="600" cy="180" r="60" fill="#ea580c" opacity="0.1"/>
+  <!-- PDF Document Icon (Favicon style) -->
+  <circle cx="600" cy="180" r="65" fill="url(#iconGradient)"/>
 
-  <!-- Tool icon -->
-  <g transform="translate(600, 180)" stroke="#ea580c" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="${tool.icon}" transform="translate(-12, -12) scale(2)"/>
+  <defs>
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ea580c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fb923c;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- PDF document shape -->
+  <g transform="translate(600, 180)">
+    <!-- White document -->
+    <path d="M-25,-35 L15,-35 L25,-25 L25,35 L-25,35 Z" fill="#ffffff" stroke="none"/>
+    <path d="M-25,-35 L15,-35 L25,-25 L25,35 L-25,35 Z" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Corner fold -->
+    <path d="M15,-35 L15,-25 L25,-25" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Lines representing text -->
+    <line x1="-15" y1="-10" x2="15" y2="-10" stroke="#ea580c" stroke-width="2"/>
+    <line x1="-15" y1="0" x2="15" y2="0" stroke="#ea580c" stroke-width="2"/>
+    <line x1="-15" y1="10" x2="10" y2="10" stroke="#ea580c" stroke-width="2"/>
+    <line x1="-15" y1="20" x2="15" y2="20" stroke="#ea580c" stroke-width="2"/>
   </g>
 
   <!-- Title with text wrapping -->

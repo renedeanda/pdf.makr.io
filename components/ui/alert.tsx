@@ -28,9 +28,9 @@ export function Alert({
   };
 
   const styles = {
-    info: 'border-2 border-blue-600 bg-blue-200 dark:border-info/30 dark:bg-blue-950/20',
+    info: 'border-2 border-blue-700 bg-blue-300 dark:border-info/30 dark:bg-blue-950/20',
     success: 'border-success/30 bg-green-50 dark:bg-green-950/20',
-    warning: 'border-2 border-amber-700 bg-amber-200 dark:bg-amber-950/20',
+    warning: 'border-2 border-amber-800 bg-amber-300 dark:border-amber-900/30 dark:bg-amber-950/20',
     error: 'border-error/30 bg-red-50 dark:bg-red-950/20',
     privacy: 'border-accent-200 bg-accent-50 dark:bg-accent-50/10',
   };
