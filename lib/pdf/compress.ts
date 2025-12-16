@@ -101,6 +101,9 @@ export async function compressPDF(
 
     // Clean up
     canvas.remove();
+
+    // Yield to main thread to allow UI updates (critical for mobile)
+    await new Promise(resolve => setTimeout(resolve, 0));
   }
 
   // Save with optimization

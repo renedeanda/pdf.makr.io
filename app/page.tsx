@@ -95,14 +95,22 @@ export default function HomePage() {
   return (
     <div className="mx-auto max-w-7xl px-6 lg:px-8 py-12 lg:py-20">
       {/* Hero Section */}
-      <section className="text-center mb-16 lg:mb-24">
+      <section className="relative text-center mb-16 lg:mb-24 overflow-hidden">
+        {/* Decorative pattern background */}
+        <div className="absolute inset-0 -z-10 opacity-[0.03] dark:opacity-[0.02]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
+            backgroundSize: '32px 32px'
+          }} />
+        </div>
+
         <h1 className="text-4xl lg:text-5xl font-bold text-text-primary tracking-tight">
           PDF Tools That Respect Your Privacy
         </h1>
         <p className="mt-6 text-lg lg:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
-          Merge, split, compress, and convert PDFs—all in your browser.
-          <br className="hidden sm:block" />
-          No uploads required. Completely free.
+          Merge, split, compress, and convert PDFs—all in your browser.{' '}
+          No uploads required.{' '}
+          Completely free.
         </p>
       </section>
 
@@ -131,7 +139,17 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="border-t border-border-light pt-16 lg:pt-20">
+      <section className="relative border-t border-border-light pt-16 lg:pt-20 overflow-hidden">
+        {/* Subtle gradient pattern background */}
+        <div className="absolute inset-0 -z-10 opacity-[0.02] dark:opacity-[0.015]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor),
+                             linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor)`,
+            backgroundSize: '40px 40px',
+            backgroundPosition: '0 0, 20px 20px'
+          }} />
+        </div>
+
         <h2 className="text-2xl font-semibold text-text-primary mb-12 text-center">
           Why pdf.makr.io?
         </h2>
