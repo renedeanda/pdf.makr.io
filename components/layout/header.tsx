@@ -31,11 +31,11 @@ export function Header() {
           <div className="flex items-center gap-2">
             {/* GitHub link */}
             <a
-              href="https://github.com"
+              href="https://github.com/renedeanda/pdf.makr.io"
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary hover:bg-surface-100 hover:text-text-primary transition-colors"
-              aria-label="GitHub"
+              aria-label="View source on GitHub"
             >
               <Github className="h-5 w-5" />
             </a>
