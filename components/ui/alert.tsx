@@ -28,9 +28,9 @@ export function Alert({
   };
 
   const styles = {
-    info: 'border-blue-300 bg-blue-100/80 dark:border-info/30 dark:bg-blue-950/20',
+    info: 'border-blue-400 bg-blue-50 dark:border-info/30 dark:bg-blue-950/20',
     success: 'border-success/30 bg-green-50 dark:bg-green-950/20',
-    warning: 'border-warning/30 bg-amber-50 dark:bg-amber-950/20',
+    warning: 'border-amber-400 bg-amber-50 dark:bg-amber-950/20',
     error: 'border-error/30 bg-red-50 dark:bg-red-950/20',
     privacy: 'border-accent-200 bg-accent-50 dark:bg-accent-50/10',
   };
@@ -44,17 +44,17 @@ export function Alert({
   };
 
   const textStyles = {
-    info: 'text-blue-900 dark:text-blue-100',
+    info: 'text-blue-950 dark:text-blue-100',
     success: 'text-green-900 dark:text-green-100',
-    warning: 'text-amber-900 dark:text-amber-100',
+    warning: 'text-amber-950 dark:text-amber-100',
     error: 'text-red-900 dark:text-red-100',
     privacy: 'text-accent-900 dark:text-accent-100',
   };
 
   const descStyles = {
-    info: 'text-blue-800 dark:text-blue-300',
+    info: 'text-blue-900 dark:text-blue-300',
     success: 'text-green-700 dark:text-green-300',
-    warning: 'text-amber-700 dark:text-amber-300',
+    warning: 'text-amber-900 dark:text-amber-300',
     error: 'text-red-700 dark:text-red-300',
     privacy: 'text-accent-700 dark:text-accent-300',
   };
