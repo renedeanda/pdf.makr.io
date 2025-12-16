@@ -151,6 +151,17 @@ export default function MergeClient() {
     setFiles((prev) => [...prev, ...newFiles]);
   }, []);
 
+  const handleLoadSample = async () => {
+    try {
+      const response = await fetch('/sample.pdf');
+      const blob = await response.blob();
+      const file = new File([blob], 'sample.pdf', { type: 'application/pdf' });
+      await handleFileDrop([file]);
+    } catch (err) {
+      setError('Failed to load sample file');
+    }
+  };
+
   const removeFile = useCallback((id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   }, []);
@@ -338,14 +349,26 @@ export default function MergeClient() {
 
       {/* Instructions */}
       {!result && !processing && files.length === 0 && (
-        <div className="mt-8 text-center">
-          <h3 className="font-medium text-text-primary mb-2">How it works</h3>
-          <ol className="text-sm text-text-secondary space-y-1">
-            <li>1. Upload two or more PDF files</li>
-            <li>2. Drag to reorder if needed</li>
-            <li>3. Click Merge to combine</li>
-            <li>4. Download your merged PDF</li>
-          </ol>
+        <div className="mt-8 text-center space-y-4">
+          <div>
+            <h3 className="font-medium text-text-primary mb-2">How it works</h3>
+            <ol className="text-sm text-text-secondary space-y-1">
+              <li>1. Upload two or more PDF files</li>
+              <li>2. Drag to reorder if needed</li>
+              <li>3. Click Merge to combine</li>
+              <li>4. Download your merged PDF</li>
+            </ol>
+          </div>
+          <div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLoadSample}
+              className="text-accent-600 hover:text-accent-700"
+            >
+              Try with sample file
+            </Button>
+          </div>
         </div>
       )}
     </div>
