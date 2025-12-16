@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import CompressClient from './compress-client';
-import { MobileBlockedMessage } from '@/components/ui/mobile-blocked-message';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 export const metadata: Metadata = {
   title: 'Compress PDF - Reduce File Size',
@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 
 export default function CompressPage() {
   return (
-    <MobileBlockedMessage toolName="Compress PDF">
+    <ErrorBoundary>
       <CompressClient />
-    </MobileBlockedMessage>
+    </ErrorBoundary>
   );
 }

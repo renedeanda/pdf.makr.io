@@ -1,4 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
+import { PerformanceMonitor, MemoryManager } from '@/lib/performance';
 
 export type CompressionLevel = 'low' | 'medium' | 'high';
 
@@ -43,8 +44,15 @@ export async function compressPDF(
   level: CompressionLevel = 'medium',
   onProgress?: (progress: CompressionProgress) => void
 ): Promise<CompressionResult> {
+  const perfMonitor = new PerformanceMonitor();
+
   try {
     console.log('Starting PDF compression...', { fileSize: file.size, level });
+
+    // Check memory availability
+    if (!MemoryManager.checkMemoryAvailable()) {
+      console.warn('Low memory detected, processing may be slow');
+    }
 
     const pdfjsLib = await getPdfjsLib();
     const originalSize = file.size;
@@ -78,6 +86,9 @@ export async function compressPDF(
     const pdfJsDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const totalPages = pdfJsDoc.numPages;
     console.log('PDF has', totalPages, 'pages');
+
+    // Start performance monitoring
+    perfMonitor.start(`compress-pdf-${level}`, originalSize, totalPages);
 
     // Create new optimized PDF
     const newPdf = await PDFDocument.create();
@@ -172,6 +183,9 @@ export async function compressPDF(
       status: 'Complete!',
     });
 
+    // Log performance metrics
+    perfMonitor.end(true);
+
     return {
       data: compressedData,
       originalSize,
@@ -181,6 +195,10 @@ export async function compressPDF(
     };
   } catch (error) {
     console.error('Compression error:', error);
+
+    // Log failed performance metrics
+    perfMonitor.end(false, error instanceof Error ? error.message : 'Unknown error');
+
     throw new Error(
       error instanceof Error
         ? `Compression failed: ${error.message}`

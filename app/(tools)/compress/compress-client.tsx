@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { FileOutput, Download, ArrowLeft, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
 import { formatFileSize } from '@/lib/utils';
+import { useKeyboardShortcuts, commonShortcuts } from '@/hooks/use-keyboard-shortcuts';
+import { celebrateSuccess } from '@/lib/confetti';
+import { validateFile } from '@/lib/file-validation';
 
 type CompressionLevel = 'low' | 'medium' | 'high';
 
@@ -36,30 +39,37 @@ export default function CompressClient() {
   const [progress, setProgress] = useState<CompressionProgress | null>(null);
   const [result, setResult] = useState<CompressionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileDrop = useCallback(async (files: File[]) => {
     const droppedFile = files[0];
-    if (!droppedFile || droppedFile.type !== 'application/pdf') {
+    if (!droppedFile) {
       setError('Please upload a PDF file');
       return;
     }
 
-    // Check file size and warn on mobile for large files
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isLargeFile = droppedFile.size > 10 * 1024 * 1024; // 10MB
+    // Validate file
+    const validation = await validateFile(droppedFile, {
+      allowedTypes: ['application/pdf'],
+      checkIntegrity: true,
+    });
 
-    if (isMobile && isLargeFile) {
-      const fileSizeMB = (droppedFile.size / (1024 * 1024)).toFixed(1);
-      setError(
-        `Large PDF detected (${fileSizeMB}MB). Processing may be slow on mobile devices. ` +
-        `For best results, try using a desktop computer for files over 10MB.`
-      );
-      // Still allow the file, just warn the user
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid file');
+      return;
     }
 
     setFile(droppedFile);
     setResult(null);
-    if (!isLargeFile || !isMobile) {
+
+    // Show warning if file is large
+    if (validation.warning) {
+      let warningMessage = validation.warning;
+      if (validation.estimatedProcessingTime) {
+        warningMessage += ` Estimated time: ${validation.estimatedProcessingTime}.`;
+      }
+      setError(warningMessage);
+    } else {
       setError(null);
     }
   }, []);
@@ -76,6 +86,11 @@ export default function CompressClient() {
       const { compressPDF } = await import('@/lib/pdf/compress');
       const compressionResult = await compressPDF(file, compressionLevel, (p) => setProgress(p));
       setResult(compressionResult);
+
+      // Celebrate success!
+      if (compressionResult.savingsPercent > 0) {
+        celebrateSuccess();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to compress PDF');
     } finally {
@@ -97,6 +112,40 @@ export default function CompressClient() {
     setProgress(null);
     setError(null);
   };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    commonShortcuts.open(triggerFileInput),
+    commonShortcuts.save(() => {
+      if (result && !processing) {
+        handleDownload();
+      }
+    }),
+    commonShortcuts.delete(() => {
+      if (file && !processing) {
+        handleReset();
+      }
+    }),
+    commonShortcuts.backspace(() => {
+      if (file && !processing) {
+        handleReset();
+      }
+    }),
+    commonShortcuts.enter(() => {
+      if (file && !processing && !result) {
+        handleCompress();
+      }
+    }, true),
+    commonShortcuts.escape(() => {
+      if (processing || result) {
+        handleReset();
+      }
+    }),
+  ], true);
 
   return (
     <div className="mx-auto max-w-4xl px-6 lg:px-8 py-12">
@@ -178,14 +227,14 @@ export default function CompressClient() {
       {/* Processing State */}
       {processing && (
         <div className="rounded-xl border border-border-medium bg-surface-50 p-8">
-          <h2 className="text-lg font-semibold text-text-primary mb-4 text-center">
+          <h2 className="text-lg font-semibold text-text-primary mb-4 text-center" role="status" aria-live="polite">
             Compressing PDF...
           </h2>
           <ProgressBar
             progress={progress?.percentage ?? 0}
             status={progress?.status ?? 'Starting compression...'}
           />
-          <p className="text-sm text-text-secondary text-center mt-4">
+          <p className="text-sm text-text-secondary text-center mt-4" role="status" aria-live="polite">
             This may take a while for large files
           </p>
         </div>
@@ -195,11 +244,26 @@ export default function CompressClient() {
       {!result && !processing && (
         <>
           {!file ? (
-            <UploadZone
-              onDrop={handleFileDrop}
-              multiple={false}
-              fileType="pdf"
-            />
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                aria-label="Upload PDF file"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  if (files.length > 0) {
+                    handleFileDrop(files);
+                  }
+                }}
+              />
+              <UploadZone
+                onDrop={handleFileDrop}
+                multiple={false}
+                fileType="pdf"
+              />
+            </>
           ) : (
             <div className="space-y-6">
               {/* File Info */}
@@ -225,6 +289,8 @@ export default function CompressClient() {
                     <button
                       key={level.level}
                       onClick={() => setCompressionLevel(level.level)}
+                      aria-label={`${level.label} compression: ${level.description}`}
+                      aria-pressed={compressionLevel === level.level}
                       className={`p-4 rounded-xl border-2 text-left transition-all ${
                         compressionLevel === level.level
                           ? 'border-accent-500 bg-accent-50 dark:bg-accent-100/10'

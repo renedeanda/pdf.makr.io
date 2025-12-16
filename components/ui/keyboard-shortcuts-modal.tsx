@@ -12,10 +12,14 @@ interface Shortcut {
 
 const shortcuts: Shortcut[] = [
   { keys: ['?'], description: 'Show keyboard shortcuts', category: 'General' },
-  { keys: ['Esc'], description: 'Close modal/dialog', category: 'General' },
+  { keys: ['Esc'], description: 'Close modal/cancel operation', category: 'General' },
   { keys: ['/', 'Ctrl', 'K'], description: 'Quick search (coming soon)', category: 'Navigation' },
   { keys: ['1-9'], description: 'Navigate to tool 1-9', category: 'Navigation' },
   { keys: ['H'], description: 'Go to homepage', category: 'Navigation' },
+  { keys: ['Ctrl', 'O'], description: 'Open file picker', category: 'File Operations' },
+  { keys: ['Ctrl', 'S'], description: 'Download/Save result', category: 'File Operations' },
+  { keys: ['Delete'], description: 'Remove selected file', category: 'File Operations' },
+  { keys: ['Backspace'], description: 'Remove selected file', category: 'File Operations' },
   { keys: ['Ctrl', 'V'], description: 'Paste file (when available)', category: 'Actions' },
   { keys: ['Ctrl', 'Enter'], description: 'Submit/Process', category: 'Actions' },
   { keys: ['Ctrl', 'A'], description: 'Select all pages', category: 'Selection' },
