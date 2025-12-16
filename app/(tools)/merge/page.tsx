@@ -148,12 +148,12 @@ export default function MergePage() {
           <p className="text-text-secondary mb-6">
             {files.length} files merged - {totalPages} pages - {formatFileSize(result.length)}
           </p>
-          <div className="flex justify-center gap-4">
-            <Button onClick={handleDownload} size="lg">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+            <Button onClick={handleDownload} size="lg" className="w-full sm:w-auto">
               <Download className="h-5 w-5 mr-2" />
               Download PDF
             </Button>
-            <Button variant="secondary" onClick={handleReset}>
+            <Button variant="secondary" onClick={handleReset} className="w-full sm:w-auto">
               Merge More Files
             </Button>
           </div>
@@ -161,14 +161,14 @@ export default function MergePage() {
       )}
 
       {/* Processing State */}
-      {processing && progress && (
+      {processing && (
         <div className="rounded-xl border border-border-medium bg-surface-50 p-8">
           <h2 className="text-lg font-semibold text-text-primary mb-4 text-center">
             Merging PDFs...
           </h2>
           <ProgressBar
-            progress={progress.percentage}
-            status={`Processing file ${progress.current} of ${progress.total}`}
+            progress={progress?.percentage ?? 0}
+            status={progress ? `Processing file ${progress.current} of ${progress.total}` : 'Starting merge...'}
           />
         </div>
       )}

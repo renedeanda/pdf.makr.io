@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: '%s | pdf.makr.io',
   },
   description:
-    'Free, privacy-first PDF tools. Merge, split, compress, and convert PDFs entirely in your browser. No uploads, no tracking, no limits.',
+    'Free, browser-based PDF tools. Merge, split, compress, and convert PDFs locally. No uploads required, no limits.',
   keywords: [
     'PDF tools',
     'merge PDF',
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     siteName: 'pdf.makr.io',
     title: 'PDF Tools - Free Online PDF Editor',
     description:
-      'Free, privacy-first PDF tools. Merge, split, compress, and convert PDFs entirely in your browser.',
+      'Free, browser-based PDF tools. Merge, split, compress, and convert PDFs locally.',
     images: [
       {
         url: '/og-image.png',
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'PDF Tools - Free Online PDF Editor',
     description:
-      'Free, privacy-first PDF tools. Merge, split, compress, and convert PDFs entirely in your browser.',
+      'Free, browser-based PDF tools. Merge, split, compress, and convert PDFs locally.',
     images: ['/og-image.png'],
   },
   robots: {

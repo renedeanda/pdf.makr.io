@@ -1,12 +1,10 @@
 # pdf.makr.io
 
-A privacy-first, browser-based PDF toolkit that handles merge, split, compress, and convert operations entirely client-side. No uploads to servers, no tracking, just fast, secure PDF manipulation.
-
-**Your PDFs never leave your browser. Fast, free, and actually works.**
+A privacy-first, browser-based PDF toolkit. All processing happens locally in your browser - your files never leave your device.
 
 ## Features
 
-### Phase 1 Tools (Implemented)
+### PDF Tools (9 Tools)
 - **Merge PDFs** - Combine multiple PDF files into a single document
 - **Split PDF** - Extract pages or split into multiple files
 - **Compress PDF** - Reduce file size while maintaining quality
@@ -14,12 +12,14 @@ A privacy-first, browser-based PDF toolkit that handles merge, split, compress, 
 - **Images to PDF** - Create a PDF from multiple images
 - **Rotate Pages** - Rotate PDF pages to any orientation
 - **Delete Pages** - Remove unwanted pages from your PDF
+- **Page Numbers** - Add page numbers to your PDF document
+- **Watermark** - Add text watermarks to PDF pages
 
-### Key Principles
-- 100% client-side processing (no server uploads)
-- Files never touch our servers
-- No file size limits (limited only by browser memory)
-- Usage analytics only (Google Analytics for page views, no file data)
+### Key Benefits
+- **100% Private** - Files are processed locally in your browser. Nothing is uploaded to any server.
+- **Lightning Fast** - No waiting for uploads or downloads. Processing happens instantly on your device.
+- **No Limits** - Process as many files as you want. No file size limits, no daily quotas.
+- **Free Forever** - No subscriptions, no hidden fees.
 
 ## Tech Stack
 
@@ -27,8 +27,8 @@ A privacy-first, browser-based PDF toolkit that handles merge, split, compress, 
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
 - **PDF Processing**: pdf-lib, pdfjs-dist
-- **File Handling**: JSZip, FileSaver.js
-- **UI**: Framer Motion, Lucide React, next-themes
+- **File Handling**: JSZip
+- **UI**: Lucide React, next-themes
 
 ## Getting Started
 
@@ -47,7 +47,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` and configure:
+Create a `.env.local` file:
 
 ```bash
 # Google Analytics (optional)
@@ -66,7 +66,9 @@ pdf.makr.io/
 │   │   ├── pdf-to-images/
 │   │   ├── images-to-pdf/
 │   │   ├── rotate/
-│   │   └── delete/
+│   │   ├── delete/
+│   │   ├── page-numbers/
+│   │   └── watermark/
 │   ├── layout.tsx
 │   ├── page.tsx
 │   └── globals.css
@@ -86,7 +88,7 @@ pdf.makr.io/
 All PDF processing happens entirely in your browser:
 - Files are never uploaded to any server
 - All operations use client-side JavaScript libraries
-- We only track page views via Google Analytics (no file data)
+- Google Analytics tracks page views only (optional)
 
 ## License
 

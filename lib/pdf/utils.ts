@@ -1,9 +1,12 @@
 import { PDFDocument } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure PDF.js worker
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Helper to get pdfjs with worker configured
+async function getPdfjsLib() {
+  const pdfjsLib = await import('pdfjs-dist');
+  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  }
+  return pdfjsLib;
 }
 
 export async function getPDFPageCount(file: File): Promise<number> {
@@ -12,13 +15,15 @@ export async function getPDFPageCount(file: File): Promise<number> {
   return pdf.getPageCount();
 }
 
-export async function getPDFDocument(file: File): Promise<pdfjsLib.PDFDocumentProxy> {
+export async function getPDFDocument(file: File) {
+  const pdfjsLib = await getPdfjsLib();
   const arrayBuffer = await file.arrayBuffer();
   return pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function renderPageToCanvas(
-  pdfDoc: pdfjsLib.PDFDocumentProxy,
+  pdfDoc: any,
   pageNumber: number,
   canvas: HTMLCanvasElement,
   scale: number = 1

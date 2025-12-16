@@ -33,7 +33,7 @@ export function PageThumbnail({
     let cancelled = false;
 
     async function renderThumbnail() {
-      if (!canvasRef.current) return;
+      if (!canvasRef.current || !pdfUrl) return;
 
       try {
         setLoading(true);
@@ -41,9 +41,14 @@ export function PageThumbnail({
 
         // Dynamic import to avoid SSR issues
         const pdfjsLib = await import('pdfjs-dist');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-        const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+        // Set worker source with explicit https
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+        }
+
+        const loadingTask = pdfjsLib.getDocument(pdfUrl);
+        const pdf = await loadingTask.promise;
         if (cancelled) return;
 
         const page = await pdf.getPage(pageNumber);
@@ -52,6 +57,8 @@ export function PageThumbnail({
         const viewport = page.getViewport({ scale: 0.3, rotation });
 
         const canvas = canvasRef.current;
+        if (!canvas) return;
+
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
@@ -64,7 +71,9 @@ export function PageThumbnail({
           canvas,
         }).promise;
 
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       } catch (err) {
         if (!cancelled) {
           console.error('Failed to render thumbnail:', err);

@@ -1,10 +1,13 @@
-import { PDFDocument, rgb } from 'pdf-lib';
-import * as pdfjsLib from 'pdfjs-dist';
+import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
 
-// Configure PDF.js worker
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Helper to get pdfjs with worker configured
+async function getPdfjsLib() {
+  const pdfjsLib = await import('pdfjs-dist');
+  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  }
+  return pdfjsLib;
 }
 
 export interface ConversionProgress {
@@ -29,6 +32,7 @@ export async function pdfToImages(
   },
   onProgress?: (progress: ConversionProgress) => void
 ): Promise<ImageOutput[]> {
+  const pdfjsLib = await getPdfjsLib();
   const arrayBuffer = await file.arrayBuffer();
   const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
