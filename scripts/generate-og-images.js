@@ -41,7 +41,7 @@ function generateSVG(tool) {
   const subtitleLines = wrapText(tool.subtitle, 40);
 
   // Calculate vertical positioning with more spacing
-  const baseY = 280;
+  const baseY = 330;
   const titleSpacing = 75;
   const subtitleSpacing = 60;
   const gapBetweenTitleSubtitle = 50;
