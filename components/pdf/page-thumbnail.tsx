@@ -41,7 +41,7 @@ export function PageThumbnail({
       <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
         <FileText
           className={cn(
-            'h-20 w-20 transition-colors',
+            'h-12 w-12 transition-colors',
             selected ? 'text-accent-600' : 'text-text-tertiary group-hover:text-accent-500'
           )}
         />
