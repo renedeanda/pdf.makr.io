@@ -6,6 +6,23 @@ import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
 import { formatFileSize, generateId } from '@/lib/utils';
 import { subtleSuccess } from '@/lib/confetti';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface MergeProgress {
   current: number;
@@ -21,12 +38,88 @@ interface PDFFileItem {
   pageCount: number;
 }
 
+function SortableFileItem({
+  file,
+  index,
+  onRemove,
+}: {
+  file: PDFFileItem;
+  index: number;
+  onRemove: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: file.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-4 rounded-lg border border-border-medium bg-white dark:bg-surface-50 p-4 touch-none"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-text-tertiary hover:text-text-secondary"
+      >
+        <GripVertical className="h-5 w-5" />
+      </div>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-50 text-sm font-medium text-accent-600">
+        {index + 1}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-text-primary truncate">{file.name}</p>
+        <p className="text-sm text-text-secondary">
+          {file.pageCount} {file.pageCount === 1 ? 'page' : 'pages'} - {formatFileSize(file.size)}
+        </p>
+      </div>
+      <button
+        onClick={() => onRemove(file.id)}
+        className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-surface-100 text-text-tertiary hover:text-error transition-colors"
+        aria-label="Remove file"
+      >
+        <X className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
 export default function MergeClient() {
   const [files, setFiles] = useState<PDFFileItem[]>([]);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState<MergeProgress | null>(null);
   const [result, setResult] = useState<Uint8Array | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setFiles((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   const handleFileDrop = useCallback(async (droppedFiles: File[]) => {
     setError(null);
@@ -193,34 +286,27 @@ export default function MergeClient() {
           ) : (
             <div className="space-y-6">
               {/* File List */}
-              <div className="space-y-3">
-                {files.map((file, index) => (
-                  <div
-                    key={file.id}
-                    className="flex items-center gap-4 rounded-lg border border-border-medium bg-white dark:bg-surface-50 p-4"
-                  >
-                    <div className="cursor-grab text-text-tertiary hover:text-text-secondary">
-                      <GripVertical className="h-5 w-5" />
-                    </div>
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-50 text-sm font-medium text-accent-600">
-                      {index + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-text-primary truncate">{file.name}</p>
-                      <p className="text-sm text-text-secondary">
-                        {file.pageCount} {file.pageCount === 1 ? 'page' : 'pages'} - {formatFileSize(file.size)}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => removeFile(file.id)}
-                      className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-surface-100 text-text-tertiary hover:text-error transition-colors"
-                      aria-label="Remove file"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={files.map((f) => f.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {files.map((file, index) => (
+                      <SortableFileItem
+                        key={file.id}
+                        file={file}
+                        index={index}
+                        onRemove={removeFile}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
 
               {/* Add More Button */}
               <UploadZone
