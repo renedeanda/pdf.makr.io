@@ -28,7 +28,7 @@ export function Alert({
   };
 
   const styles = {
-    info: 'border-info/30 bg-blue-50 dark:bg-blue-950/20',
+    info: 'border-blue-300 bg-blue-100/80 dark:border-info/30 dark:bg-blue-950/20',
     success: 'border-success/30 bg-green-50 dark:bg-green-950/20',
     warning: 'border-warning/30 bg-amber-50 dark:bg-amber-950/20',
     error: 'border-error/30 bg-red-50 dark:bg-red-950/20',
@@ -36,7 +36,7 @@ export function Alert({
   };
 
   const iconStyles = {
-    info: 'text-info',
+    info: 'text-blue-600 dark:text-info',
     success: 'text-success',
     warning: 'text-warning',
     error: 'text-error',
@@ -52,7 +52,7 @@ export function Alert({
   };
 
   const descStyles = {
-    info: 'text-blue-700 dark:text-blue-300',
+    info: 'text-blue-800 dark:text-blue-300',
     success: 'text-green-700 dark:text-green-300',
     warning: 'text-amber-700 dark:text-amber-300',
     error: 'text-red-700 dark:text-red-300',

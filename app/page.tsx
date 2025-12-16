@@ -93,10 +93,10 @@ const features = [
 
 export default function HomePage() {
   return (
-    <div className="mx-auto max-w-7xl px-6 lg:px-8 py-12 lg:py-20">
-      {/* Hero Section */}
-      <section className="relative text-center mb-16 lg:mb-24 overflow-hidden">
-        {/* Decorative pattern background */}
+    <>
+      {/* Hero Section with full-width background */}
+      <section className="relative text-center mb-16 lg:mb-24 overflow-hidden py-12 lg:py-20">
+        {/* Decorative pattern background - full width */}
         <div className="absolute inset-0 -z-10 opacity-[0.03] dark:opacity-[0.02]">
           <div className="absolute inset-0" style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
@@ -104,15 +104,19 @@ export default function HomePage() {
           }} />
         </div>
 
-        <h1 className="text-4xl lg:text-5xl font-bold text-text-primary tracking-tight">
-          PDF Tools That Respect Your Privacy
-        </h1>
-        <p className="mt-6 text-lg lg:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
-          Merge, split, compress, and convert PDFs—all in your browser.{' '}
-          No uploads required.{' '}
-          Completely free.
-        </p>
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <h1 className="text-4xl lg:text-5xl font-bold text-text-primary tracking-tight">
+            PDF Tools That Respect Your Privacy
+          </h1>
+          <p className="mt-6 text-lg lg:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed">
+            Merge, split, compress, and convert PDFs—all in your browser.{' '}
+            No uploads required.{' '}
+            Completely free.
+          </p>
+        </div>
       </section>
+
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
 
       {/* Privacy Alert */}
       <Alert variant="privacy" className="max-w-2xl mx-auto mb-12 lg:mb-16">
@@ -138,9 +142,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="relative border-t border-border-light pt-16 lg:pt-20 overflow-hidden">
-        {/* Subtle gradient pattern background */}
+      {/* Bottom CTA */}
+      <section className="mt-20 lg:mt-28 text-center pb-12">
+        <p className="text-text-secondary">
+          For 90% of PDF tasks, pdf.makr.io is all you need.
+          <br />
+          And unlike other tools, your files never leave your browser.
+        </p>
+      </section>
+      </div>
+
+      {/* Features Section with full-width background */}
+      <section className="relative border-t border-border-light pt-16 lg:pt-20 pb-16 lg:pb-20 overflow-hidden">
+        {/* Subtle gradient pattern background - full width */}
         <div className="absolute inset-0 -z-10 opacity-[0.02] dark:opacity-[0.015]">
           <div className="absolute inset-0" style={{
             backgroundImage: `linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor),
@@ -150,34 +164,27 @@ export default function HomePage() {
           }} />
         </div>
 
-        <h2 className="text-2xl font-semibold text-text-primary mb-12 text-center">
-          Why pdf.makr.io?
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-          {features.map((feature) => (
-            <div key={feature.title} className="text-center">
-              <div className="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-accent-50 dark:bg-accent-100/10 mb-4">
-                <feature.icon className="h-7 w-7 text-accent-600 dark:text-accent-500" />
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <h2 className="text-2xl font-semibold text-text-primary mb-12 text-center">
+            Why pdf.makr.io?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+            {features.map((feature) => (
+              <div key={feature.title} className="text-center">
+                <div className="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-accent-50 dark:bg-accent-100/10 mb-4">
+                  <feature.icon className="h-7 w-7 text-accent-600 dark:text-accent-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-text-secondary leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
-
-      {/* Bottom CTA */}
-      <section className="mt-20 lg:mt-28 text-center">
-        <p className="text-text-secondary">
-          For 90% of PDF tasks, pdf.makr.io is all you need.
-          <br />
-          And unlike other tools, your files never leave your browser.
-        </p>
-      </section>
-    </div>
+    </>
   );
 }

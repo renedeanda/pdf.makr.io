@@ -44,9 +44,24 @@ export default function CompressClient() {
       return;
     }
 
+    // Check file size and warn on mobile for large files
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isLargeFile = droppedFile.size > 10 * 1024 * 1024; // 10MB
+
+    if (isMobile && isLargeFile) {
+      const fileSizeMB = (droppedFile.size / (1024 * 1024)).toFixed(1);
+      setError(
+        `Large PDF detected (${fileSizeMB}MB). Processing may be slow on mobile devices. ` +
+        `For best results, try using a desktop computer for files over 10MB.`
+      );
+      // Still allow the file, just warn the user
+    }
+
     setFile(droppedFile);
     setResult(null);
-    setError(null);
+    if (!isLargeFile || !isMobile) {
+      setError(null);
+    }
   }, []);
 
   const handleCompress = async () => {
