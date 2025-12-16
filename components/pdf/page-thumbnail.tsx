@@ -41,15 +41,15 @@ export function PageThumbnail({
       <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
         <FileText
           className={cn(
-            'h-16 w-16 mb-3 transition-colors',
+            'h-20 w-20 transition-colors',
             selected ? 'text-accent-600' : 'text-text-tertiary group-hover:text-accent-500'
           )}
         />
         <div className={cn(
-          'text-2xl font-semibold transition-colors',
-          selected ? 'text-accent-700 dark:text-accent-500' : 'text-text-secondary'
+          'absolute bottom-3 left-0 right-0 text-center text-xs font-medium transition-colors',
+          selected ? 'text-accent-700 dark:text-accent-500' : 'text-text-tertiary'
         )}>
-          Page {pageNumber}
+          {pageNumber}
         </div>
       </div>
 

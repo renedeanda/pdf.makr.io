@@ -88,7 +88,7 @@ export function MobileBlockedMessage({ toolName, children }: MobileBlockedMessag
           </Link>
         </div>
 
-        <div className="mt-8 p-4 bg-blue-100 dark:bg-blue-950/20 rounded-lg border-2 border-blue-500 dark:border-blue-900/30">
+        <div className="mt-8 p-4 bg-blue-200 dark:bg-blue-950/20 rounded-lg border-2 border-blue-600 dark:border-blue-900/30">
           <p className="text-sm text-blue-950 dark:text-blue-100">
             <strong>Tip:</strong> You can access {toolName} from any desktop computer or laptop.
             Your files are processed locally in the browser, so your data stays private even on public computers.
