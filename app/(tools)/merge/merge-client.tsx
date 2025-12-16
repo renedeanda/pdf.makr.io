@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Layers, Download, ArrowLeft, GripVertical, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
 import { formatFileSize, generateId } from '@/lib/utils';
+import { subtleSuccess } from '@/lib/confetti';
 
 interface MergeProgress {
   current: number;
@@ -94,6 +95,13 @@ export default function MergeClient() {
       downloadPDF(result, filename);
     }
   };
+
+  // Celebrate when merge completes
+  useEffect(() => {
+    if (result && !processing) {
+      subtleSuccess();
+    }
+  }, [result, processing]);
 
   const handleReset = () => {
     setFiles([]);
