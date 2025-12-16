@@ -44,18 +44,18 @@ export function Alert({
   };
 
   const textStyles = {
-    info: 'text-blue-950 dark:text-blue-100',
-    success: 'text-green-900 dark:text-green-100',
-    warning: 'text-amber-950 dark:text-amber-100',
-    error: 'text-red-900 dark:text-red-100',
+    info: 'text-gray-900 dark:text-blue-100',
+    success: 'text-gray-900 dark:text-green-100',
+    warning: 'text-gray-900 dark:text-amber-100',
+    error: 'text-gray-900 dark:text-red-100',
     privacy: 'text-accent-900 dark:text-accent-100',
   };
 
   const descStyles = {
-    info: 'text-blue-900 dark:text-blue-300',
-    success: 'text-green-700 dark:text-green-300',
-    warning: 'text-amber-900 dark:text-amber-300',
-    error: 'text-red-700 dark:text-red-300',
+    info: 'text-gray-800 dark:text-blue-300',
+    success: 'text-gray-800 dark:text-green-300',
+    warning: 'text-gray-800 dark:text-amber-300',
+    error: 'text-gray-800 dark:text-red-300',
     privacy: 'text-accent-700 dark:text-accent-300',
   };
 
