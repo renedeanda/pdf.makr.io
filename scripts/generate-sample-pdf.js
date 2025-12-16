@@ -128,9 +128,9 @@ BT
 0 -40 Td
 (All tools on pdf.makr.io work locally in your browser.) Tj
 0 -30 Td
-(Your files never leave your device.) Tj
+(Your files are processed entirely on your device.) Tj
 0 -30 Td
-(No uploads, no tracking, no limits.) Tj
+(Free to use with no limits.) Tj
 ET
 endstream
 endobj
