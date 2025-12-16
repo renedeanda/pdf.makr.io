@@ -433,7 +433,11 @@ export default function CompressClient() {
                 <Button variant="ghost" onClick={handleReset}>
                   Cancel
                 </Button>
-                <Button onClick={handleCompress}>
+                <Button
+                  onClick={handleCompress}
+                  disabled={analysis ? !analysis.recommendation.shouldCompress : false}
+                  title={analysis && !analysis.recommendation.shouldCompress ? 'Compression not recommended for this file' : undefined}
+                >
                   <FileOutput className="h-5 w-5 mr-2" />
                   Compress PDF
                 </Button>

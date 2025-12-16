@@ -28,34 +28,34 @@ export function Alert({
   };
 
   const styles = {
-    info: 'border-2 border-blue-700 bg-blue-300 dark:border-info/30 dark:bg-blue-950/20',
-    success: 'border-success/30 bg-green-50 dark:bg-green-950/20',
-    warning: 'border-2 border-amber-800 bg-amber-300 dark:border-amber-900/30 dark:bg-amber-950/20',
-    error: 'border-error/30 bg-red-50 dark:bg-red-950/20',
-    privacy: 'border-accent-200 bg-accent-50 dark:bg-accent-50/10',
+    info: 'border border-blue-200 bg-blue-50 dark:border-info/30 dark:bg-blue-950/20',
+    success: 'border border-green-200 bg-green-50 dark:border-success/30 dark:bg-green-950/20',
+    warning: 'border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-950/20',
+    error: 'border border-red-200 bg-red-50 dark:border-error/30 dark:bg-red-950/20',
+    privacy: 'border border-accent-200 bg-accent-50 dark:border-accent-500/30 dark:bg-accent-50/10',
   };
 
   const iconStyles = {
-    info: 'text-blue-600 dark:text-info',
-    success: 'text-success',
-    warning: 'text-warning',
-    error: 'text-error',
+    info: 'text-blue-600 dark:text-blue-400',
+    success: 'text-green-600 dark:text-green-400',
+    warning: 'text-amber-600 dark:text-amber-400',
+    error: 'text-red-600 dark:text-red-400',
     privacy: 'text-accent-600 dark:text-accent-500',
   };
 
   const textStyles = {
-    info: 'text-gray-900 dark:text-blue-100',
-    success: 'text-gray-900 dark:text-green-100',
-    warning: 'text-gray-900 dark:text-amber-100',
-    error: 'text-gray-900 dark:text-red-100',
+    info: 'text-blue-900 dark:text-blue-100',
+    success: 'text-green-900 dark:text-green-100',
+    warning: 'text-amber-900 dark:text-amber-100',
+    error: 'text-red-900 dark:text-red-100',
     privacy: 'text-accent-900 dark:text-accent-100',
   };
 
   const descStyles = {
-    info: 'text-gray-800 dark:text-blue-300',
-    success: 'text-gray-800 dark:text-green-300',
-    warning: 'text-gray-800 dark:text-amber-300',
-    error: 'text-gray-800 dark:text-red-300',
+    info: 'text-blue-800 dark:text-blue-300',
+    success: 'text-green-800 dark:text-green-300',
+    warning: 'text-amber-800 dark:text-amber-300',
+    error: 'text-red-800 dark:text-red-300',
     privacy: 'text-accent-700 dark:text-accent-300',
   };
 

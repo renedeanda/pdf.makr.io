@@ -135,21 +135,21 @@ function generateRecommendation(
 
   // Large files with images - best candidates for compression
   if (fileSizeMB > 2 && hasImages) {
-    let recommendedLevel: 'low' | 'medium' | 'high' = 'medium';
-    let estimatedSavings = 30;
+    let recommendedLevel: 'low' | 'medium' | 'high' = 'high';
+    let estimatedSavings = 50;
 
     if (bytesPerPage > 500000) {
-      // Very large pages, high compression recommended
+      // Very large pages with lots of image data, high compression will help most
       recommendedLevel = 'high';
-      estimatedSavings = 60;
-    } else if (bytesPerPage > 200000) {
-      // Medium pages
-      recommendedLevel = 'medium';
+      estimatedSavings = 70;
+    } else if (bytesPerPage < 100000) {
+      // Already compressed pages, need high compression to make a difference
+      recommendedLevel = 'high';
       estimatedSavings = 40;
     } else {
-      // Smaller pages, use low compression
-      recommendedLevel = 'low';
-      estimatedSavings = 20;
+      // Medium-sized pages, medium to high compression recommended
+      recommendedLevel = 'medium';
+      estimatedSavings = 50;
     }
 
     return {
@@ -165,8 +165,8 @@ function generateRecommendation(
     return {
       shouldCompress: true,
       reason: 'PDF contains images. Compression may help reduce file size.',
-      recommendedLevel: 'medium',
-      estimatedSavings: 25,
+      recommendedLevel: 'high',
+      estimatedSavings: 35,
     };
   }
 
