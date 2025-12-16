@@ -139,14 +139,14 @@ export default function MergeClient() {
 
       {/* Error Alert */}
       {error && (
-        <Alert variant="error" className="mb-6" onDismiss={() => setError(null)}>
+        <Alert variant="error" className="mb-6 animate-in fade-in slide-in-from-top-2 duration-300" onDismiss={() => setError(null)}>
           {error}
         </Alert>
       )}
 
       {/* Result State */}
       {result && !processing && (
-        <div className="rounded-xl border border-success/30 bg-green-50 dark:bg-green-950/20 p-8 text-center">
+        <div className="rounded-xl border border-success/30 bg-green-50 dark:bg-green-950/20 p-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/10 mb-4">
             <Download className="h-8 w-8 text-success" />
           </div>
@@ -170,7 +170,7 @@ export default function MergeClient() {
 
       {/* Processing State */}
       {processing && (
-        <div className="rounded-xl border border-border-medium bg-surface-50 p-8">
+        <div className="rounded-xl border border-border-medium bg-surface-50 p-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
           <h2 className="text-lg font-semibold text-text-primary mb-4 text-center">
             Merging PDFs...
           </h2>
