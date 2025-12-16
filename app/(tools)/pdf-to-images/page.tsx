@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import PDFToImagesClient from './pdf-to-images-client';
+import { MobileBlockedMessage } from '@/components/ui/mobile-blocked-message';
 
 export const metadata: Metadata = {
   title: 'PDF to Images - Convert PDF to PNG/JPG',
@@ -17,5 +18,9 @@ export const metadata: Metadata = {
 };
 
 export default function PDFToImagesPage() {
-  return <PDFToImagesClient />;
+  return (
+    <MobileBlockedMessage toolName="PDF to Images">
+      <PDFToImagesClient />
+    </MobileBlockedMessage>
+  );
 }
