@@ -1,4 +1,6 @@
 import { PDFDocument } from 'pdf-lib';
+import { PerformanceMonitor, MemoryManager } from '@/lib/performance';
+import { getPdfjsLib, checkBrowserSupport } from './utils-pdfjs';
 
 export type CompressionLevel = 'low' | 'medium' | 'high';
 
@@ -29,22 +31,26 @@ function isMobileDevice() {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
-// Helper to get pdfjs with worker configured
-async function getPdfjsLib() {
-  const pdfjsLib = await import('pdfjs-dist');
-  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-  }
-  return pdfjsLib;
-}
-
 export async function compressPDF(
   file: File,
   level: CompressionLevel = 'medium',
   onProgress?: (progress: CompressionProgress) => void
 ): Promise<CompressionResult> {
+  const perfMonitor = new PerformanceMonitor();
+
   try {
     console.log('Starting PDF compression...', { fileSize: file.size, level });
+
+    // Check browser support
+    const browserCheck = checkBrowserSupport();
+    if (!browserCheck.supported) {
+      throw new Error(browserCheck.message || 'Browser not supported');
+    }
+
+    // Check memory availability
+    if (!MemoryManager.checkMemoryAvailable()) {
+      console.warn('Low memory detected, processing may be slow');
+    }
 
     const pdfjsLib = await getPdfjsLib();
     const originalSize = file.size;
@@ -78,6 +84,9 @@ export async function compressPDF(
     const pdfJsDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const totalPages = pdfJsDoc.numPages;
     console.log('PDF has', totalPages, 'pages');
+
+    // Start performance monitoring
+    perfMonitor.start(`compress-pdf-${level}`, originalSize, totalPages);
 
     // Create new optimized PDF
     const newPdf = await PDFDocument.create();
@@ -172,6 +181,9 @@ export async function compressPDF(
       status: 'Complete!',
     });
 
+    // Log performance metrics
+    perfMonitor.end(true);
+
     return {
       data: compressedData,
       originalSize,
@@ -181,6 +193,10 @@ export async function compressPDF(
     };
   } catch (error) {
     console.error('Compression error:', error);
+
+    // Log failed performance metrics
+    perfMonitor.end(false, error instanceof Error ? error.message : 'Unknown error');
+
     throw new Error(
       error instanceof Error
         ? `Compression failed: ${error.message}`
