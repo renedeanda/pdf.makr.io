@@ -12,6 +12,8 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -130,6 +132,7 @@ export default function OrganizeClient() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [complete, setComplete] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -172,6 +175,10 @@ export default function OrganizeClient() {
     }
   }, []);
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -183,6 +190,8 @@ export default function OrganizeClient() {
         return arrayMove(items, oldIndex, newIndex);
       });
     }
+
+    setActiveId(null);
   };
 
   const handleMoveUp = (index: number) => {
@@ -321,6 +330,22 @@ export default function OrganizeClient() {
         <UploadZone onDrop={handleFileDrop} multiple={false} fileType="pdf" />
       )}
 
+      {/* Empty State - All pages deleted */}
+      {file && thumbnails.length === 0 && !loading && !processing && !complete && (
+        <div className="rounded-xl border border-border-medium bg-surface-50 p-8 text-center">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/20 mb-4">
+            <ArrowUpDown className="h-8 w-8 text-amber-600 dark:text-amber-500" />
+          </div>
+          <h2 className="text-xl font-semibold text-text-primary mb-2">All Pages Removed</h2>
+          <p className="text-text-secondary mb-6 max-w-md mx-auto">
+            You've removed all pages from the PDF. Upload a new file to continue organizing pages.
+          </p>
+          <Button onClick={handleReset}>
+            Upload New PDF
+          </Button>
+        </div>
+      )}
+
       {/* Organize State */}
       {file && thumbnails.length > 0 && !loading && !processing && !complete && (
         <div className="space-y-6">
@@ -352,7 +377,12 @@ export default function OrganizeClient() {
           </Alert>
 
           {/* Pages Grid */}
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
             <SortableContext
               items={thumbnails.map((t) => `page-${t.pageNumber}`)}
               strategy={verticalListSortingStrategy}
@@ -371,6 +401,22 @@ export default function OrganizeClient() {
                 ))}
               </div>
             </SortableContext>
+
+            {/* Drag Overlay */}
+            <DragOverlay>
+              {activeId ? (
+                <div className="border-2 border-accent-500 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-2xl transform rotate-3 scale-105">
+                  <img
+                    src={thumbnails.find((t) => `page-${t.pageNumber}` === activeId)?.dataUrl}
+                    alt="Dragging page"
+                    className="w-full h-auto pointer-events-none"
+                  />
+                  <div className="p-2 text-center text-sm font-medium text-text-primary bg-accent-50 dark:bg-accent-900/50">
+                    Page {thumbnails.findIndex((t) => `page-${t.pageNumber}` === activeId) + 1}
+                  </div>
+                </div>
+              ) : null}
+            </DragOverlay>
           </DndContext>
         </div>
       )}
