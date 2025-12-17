@@ -14,6 +14,7 @@ import {
   Stamp,
   FileText,
   ArrowUpDown,
+  Lock,
 } from 'lucide-react';
 import { ToolCard } from '@/components/ui/tool-card';
 import { Alert } from '@/components/ui/alert';
@@ -84,6 +85,12 @@ const tools = [
     title: 'Organize Pages',
     description: 'Reorder and reorganize pages with drag-and-drop',
     href: '/organize',
+  },
+  {
+    icon: Lock,
+    title: 'Protect PDF',
+    description: 'Password protection (coming soon)',
+    href: '/protect',
   },
 ];
 
