@@ -290,7 +290,7 @@ export default function SplitClient() {
               </div>
 
               {/* Page thumbnails grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
                 {thumbnails.map((thumb) => {
                   const isSelected = selectedPages.includes(thumb.pageNumber);
                   return (
@@ -315,11 +315,13 @@ export default function SplitClient() {
                         className="w-full h-full object-contain bg-white dark:bg-gray-900"
                       />
                       <div
-                        className={`absolute bottom-0 left-0 right-0 bg-surface-50/95 dark:bg-gray-900/95 backdrop-blur-sm py-1 text-center text-xs font-medium border-t border-border-light ${
-                          isSelected ? 'text-accent-700 dark:text-accent-500' : 'text-text-primary'
+                        className={`p-2 text-center text-sm font-medium ${
+                          isSelected
+                            ? 'text-accent-700 dark:text-accent-500 bg-accent-50 dark:bg-accent-900/50'
+                            : 'text-text-primary bg-surface-50 dark:bg-gray-800'
                         }`}
                       >
-                        {thumb.pageNumber}
+                        Page {thumb.pageNumber}
                       </div>
                       {isSelected && (
                         <div className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent-500 text-white shadow-md">
