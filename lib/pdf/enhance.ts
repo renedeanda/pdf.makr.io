@@ -1,10 +1,17 @@
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
+import { getAppropriateFont, containsEmojisOrSpecialChars } from './fonts';
 
 export interface EnhanceProgress {
   current: number;
   total: number;
   percentage: number;
   status: string;
+}
+
+export interface WatermarkResult {
+  data: Uint8Array;
+  hasUnsupportedChars: boolean;
+  warning?: string;
 }
 
 export interface PageNumberOptions {
@@ -118,11 +125,28 @@ export async function addWatermark(
   file: File,
   options: WatermarkOptions,
   onProgress?: (progress: EnhanceProgress) => void
-): Promise<Uint8Array> {
+): Promise<WatermarkResult> {
   const arrayBuffer = await file.arrayBuffer();
   const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
   const pages = pdfDoc.getPages();
-  const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  // Get appropriate font based on text content
+  const { font, hasUnsupportedChars } = await getAppropriateFont(
+    pdfDoc,
+    options.text,
+    true // bold
+  );
+
+  let warning: string | undefined;
+  if (hasUnsupportedChars) {
+    warning = 'Some special characters or emojis may not display correctly. Consider using standard text for best results.';
+  }
+
+  // Check if text contains emojis that might not render well
+  const hasEmojis = containsEmojisOrSpecialChars(options.text);
+  if (hasEmojis && !hasUnsupportedChars) {
+    warning = 'Unicode characters detected. Using enhanced font support for better compatibility.';
+  }
 
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
@@ -183,7 +207,13 @@ export async function addWatermark(
     }
   }
 
-  return pdfDoc.save();
+  const data = await pdfDoc.save();
+
+  return {
+    data,
+    hasUnsupportedChars,
+    warning,
+  };
 }
 
 // Reorder pages in a PDF
