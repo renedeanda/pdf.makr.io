@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Shield, Heart } from 'lucide-react';
+import { Shield, Heart, Github } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -67,12 +67,33 @@ export function Footer() {
 
         {/* Bottom */}
         <div className="mt-12 pt-6 border-t border-border-light flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-text-tertiary">
-            {new Date().getFullYear()} pdf.makr.io. All rights reserved.
-          </p>
-          <p className="text-sm text-text-tertiary flex items-center gap-1">
-            Made with <Heart className="h-4 w-4 text-accent-500" /> for everyone
-          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <p className="text-sm text-text-tertiary">
+              {new Date().getFullYear()} pdf.makr.io. All rights reserved.
+            </p>
+            <a
+              href="https://makr.io?utm_source=pdf.makr.io&utm_medium=footer&utm_campaign=project_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-text-tertiary hover:text-accent-600 transition-colors"
+            >
+              A makr.io project.
+            </a>
+          </div>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-text-tertiary flex items-center gap-1">
+              Made with <Heart className="h-4 w-4 text-accent-500" /> for everyone
+            </p>
+            <a
+              href="https://github.com/renedeanda/pdf.makr.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-text-tertiary hover:text-accent-600 transition-colors"
+              aria-label="View source on GitHub"
+            >
+              <Github className="h-5 w-5" />
+            </a>
+          </div>
         </div>
       </div>
     </footer>
