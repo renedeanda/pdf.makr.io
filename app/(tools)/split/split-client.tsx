@@ -296,32 +296,36 @@ export default function SplitClient() {
                   return (
                     <div
                       key={thumb.pageNumber}
-                      onClick={() => {
-                        if (isSelected) {
-                          setSelectedPages(selectedPages.filter((p) => p !== thumb.pageNumber));
-                        } else {
-                          setSelectedPages([...selectedPages, thumb.pageNumber]);
-                        }
-                      }}
-                      className={`relative aspect-[1/1.4] overflow-hidden rounded-lg border-2 shadow-sm transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-accent-500 ring-2 ring-accent-500/20'
-                          : 'border-border-medium hover:border-accent-500/50'
-                      }`}
+                      className="relative"
                     >
-                      <img
-                        src={thumb.dataUrl}
-                        alt={`Page ${thumb.pageNumber}`}
-                        className="w-full h-full object-contain bg-white dark:bg-gray-900"
-                      />
                       <div
-                        className={`p-2 text-center text-sm font-medium ${
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedPages(selectedPages.filter((p) => p !== thumb.pageNumber));
+                          } else {
+                            setSelectedPages([...selectedPages, thumb.pageNumber]);
+                          }
+                        }}
+                        className={`rounded-lg border-2 overflow-hidden shadow-sm transition-all cursor-pointer ${
                           isSelected
-                            ? 'text-accent-700 dark:text-accent-500 bg-accent-50 dark:bg-accent-900/50'
-                            : 'text-text-primary bg-surface-50 dark:bg-gray-800'
+                            ? 'border-accent-500 ring-2 ring-accent-500/20'
+                            : 'border-border-medium hover:border-accent-500/50'
                         }`}
                       >
-                        Page {thumb.pageNumber}
+                        <img
+                          src={thumb.dataUrl}
+                          alt={`Page ${thumb.pageNumber}`}
+                          className="w-full h-auto bg-white dark:bg-gray-900"
+                        />
+                        <div
+                          className={`p-2 text-center text-sm font-medium ${
+                            isSelected
+                              ? 'text-accent-700 dark:text-accent-500 bg-accent-50 dark:bg-accent-900/50'
+                              : 'text-text-primary bg-surface-50 dark:bg-gray-800'
+                          }`}
+                        >
+                          Page {thumb.pageNumber}
+                        </div>
                       </div>
                       {isSelected && (
                         <div className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent-500 text-white shadow-md">
