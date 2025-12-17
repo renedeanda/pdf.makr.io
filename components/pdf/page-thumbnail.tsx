@@ -1,6 +1,7 @@
 'use client';
 
-import { Check, RotateCw, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Check, RotateCw, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PageThumbnailProps {
@@ -24,6 +25,43 @@ export function PageThumbnail({
   showRotateButton = false,
   className,
 }: PageThumbnailProps) {
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function generateThumbnail() {
+      try {
+        setLoading(true);
+
+        // Fetch PDF file from URL
+        const response = await fetch(pdfUrl);
+        const blob = await response.blob();
+        const file = new File([blob], 'temp.pdf', { type: 'application/pdf' });
+
+        // Generate thumbnail
+        const { generatePageThumbnail } = await import('@/lib/pdf/thumbnails');
+        const thumbnail = await generatePageThumbnail(file, pageNumber, 150);
+
+        if (!cancelled) {
+          setThumbnailUrl(thumbnail.dataUrl);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to generate thumbnail:', error);
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    generateThumbnail();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pdfUrl, pageNumber]);
 
   return (
     <div
@@ -32,25 +70,36 @@ export function PageThumbnail({
         'group relative aspect-[1/1.4] overflow-hidden rounded-lg border-2 shadow-sm transition-all cursor-pointer',
         selected
           ? 'border-accent-500 ring-2 ring-accent-500/20 bg-accent-50 dark:bg-accent-950/20'
-          : 'border-border-medium hover:border-accent-500/50 bg-surface-50 hover:bg-surface-100',
+          : 'border-border-medium hover:border-accent-500/50 bg-white dark:bg-gray-900 hover:bg-surface-100',
         className
       )}
-      style={{ transform: `rotate(${rotation}deg)` }}
     >
-      {/* Simple page icon design */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-        <FileText
-          className={cn(
-            'h-12 w-12 transition-colors',
-            selected ? 'text-accent-600' : 'text-text-tertiary group-hover:text-accent-500'
-          )}
-        />
-        <div className={cn(
-          'absolute bottom-3 left-0 right-0 text-center text-xs font-medium transition-colors',
-          selected ? 'text-accent-700 dark:text-accent-500' : 'text-text-tertiary'
-        )}>
-          {pageNumber}
+      {/* Thumbnail image or loading state */}
+      {loading ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-surface-50 dark:bg-gray-900">
+          <Loader2 className="h-8 w-8 text-text-tertiary animate-spin" />
         </div>
+      ) : thumbnailUrl ? (
+        <img
+          src={thumbnailUrl}
+          alt={`Page ${pageNumber}`}
+          className="w-full h-full object-contain"
+          style={{ transform: `rotate(${rotation}deg)` }}
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-surface-50 dark:bg-gray-900">
+          <div className="text-center text-xs text-text-tertiary">
+            Page {pageNumber}
+          </div>
+        </div>
+      )}
+
+      {/* Page number label */}
+      <div className={cn(
+        'absolute bottom-0 left-0 right-0 bg-surface-50/95 dark:bg-gray-900/95 backdrop-blur-sm py-1 text-center text-xs font-medium border-t border-border-light',
+        selected ? 'text-accent-700 dark:text-accent-500' : 'text-text-primary'
+      )}>
+        {pageNumber}
       </div>
 
       {/* Selection indicator */}

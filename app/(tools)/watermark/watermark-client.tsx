@@ -33,6 +33,7 @@ export default function WatermarkClient() {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState<EnhanceProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [complete, setComplete] = useState(false);
 
   const handleFileDrop = useCallback(async (files: File[]) => {
@@ -60,6 +61,7 @@ export default function WatermarkClient() {
     setProcessing(true);
     setProgress(null);
     setError(null);
+    setWarning(null);
 
     try {
       const { addWatermark } = await import('@/lib/pdf/enhance');
@@ -79,7 +81,13 @@ export default function WatermarkClient() {
       );
 
       const filename = file.name.replace('.pdf', '_watermarked.pdf');
-      downloadPDF(result, filename);
+      downloadPDF(result.data, filename);
+
+      // Show warning if any special characters were detected
+      if (result.warning) {
+        setWarning(result.warning);
+      }
+
       setComplete(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add watermark');
@@ -94,6 +102,7 @@ export default function WatermarkClient() {
     setProgress(null);
     setComplete(false);
     setError(null);
+    setWarning(null);
   };
 
   const colorPresets = [
@@ -131,6 +140,13 @@ export default function WatermarkClient() {
       {error && (
         <Alert variant="error" className="mb-6" onDismiss={() => setError(null)}>
           {error}
+        </Alert>
+      )}
+
+      {/* Warning Alert */}
+      {warning && !error && (
+        <Alert variant="warning" className="mb-6" onDismiss={() => setWarning(null)}>
+          {warning}
         </Alert>
       )}
 

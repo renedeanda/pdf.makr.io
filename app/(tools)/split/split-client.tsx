@@ -4,7 +4,6 @@ import { useState, useCallback } from 'react';
 import { Scissors, Download, ArrowLeft, FileDown } from 'lucide-react';
 import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
-import { PageSelector } from '@/components/pdf';
 import { formatFileSize } from '@/lib/utils';
 import type { PageRange } from '@/types/pdf';
 
@@ -12,14 +11,21 @@ interface SplitProgress {
   current: number;
   total: number;
   percentage: number;
+  status?: string;
+}
+
+interface PageThumbnail {
+  pageNumber: number;
+  dataUrl: string;
 }
 
 type SplitMode = 'range' | 'extract' | 'each';
 
 export default function SplitClient() {
   const [file, setFile] = useState<File | null>(null);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [pageCount, setPageCount] = useState(0);
+  const [thumbnails, setThumbnails] = useState<PageThumbnail[]>([]);
+  const [loadingThumbnails, setLoadingThumbnails] = useState(false);
   const [selectedPages, setSelectedPages] = useState<number[]>([]);
   const [splitMode, setSplitMode] = useState<SplitMode>('extract');
   const [rangeStart, setRangeStart] = useState(1);
@@ -36,16 +42,25 @@ export default function SplitClient() {
     }
 
     try {
+      setLoadingThumbnails(true);
       const { getPDFPageCount } = await import('@/lib/pdf/utils');
+      const { generateThumbnails } = await import('@/lib/pdf/thumbnails');
+
       const count = await getPDFPageCount(droppedFile);
       setFile(droppedFile);
-      setFileUrl(URL.createObjectURL(droppedFile));
       setPageCount(count);
       setRangeEnd(count);
       setSelectedPages([]);
       setError(null);
+
+      // Generate thumbnails
+      const thumbs = await generateThumbnails(droppedFile, 150, (p) => setProgress(p));
+      setThumbnails(thumbs);
+      setLoadingThumbnails(false);
+      setProgress(null);
     } catch (err) {
       setError('Failed to read the PDF file. It may be corrupted or password-protected.');
+      setLoadingThumbnails(false);
     }
   }, []);
 
@@ -105,13 +120,13 @@ export default function SplitClient() {
   };
 
   const handleReset = () => {
-    if (fileUrl) URL.revokeObjectURL(fileUrl);
     setFile(null);
-    setFileUrl(null);
+    setThumbnails([]);
     setPageCount(0);
     setSelectedPages([]);
     setProgress(null);
     setError(null);
+    setLoadingThumbnails(false);
   };
 
   return (
@@ -179,9 +194,22 @@ export default function SplitClient() {
         </>
       )}
 
+      {/* Loading Thumbnails */}
+      {loadingThumbnails && !processing && (
+        <div className="rounded-xl border border-border-medium bg-surface-50 p-8">
+          <h2 className="text-lg font-semibold text-text-primary mb-4 text-center">
+            Loading Pages...
+          </h2>
+          <ProgressBar
+            progress={progress?.percentage ?? 0}
+            status={progress?.status ?? 'Starting...'}
+          />
+        </div>
+      )}
+
       {/* Edit State */}
-      {file && fileUrl && !processing && (
-        <div className="space-y-6">
+      {file && !loadingThumbnails && !processing && thumbnails.length > 0 && (
+        <div className="space-y-3">
           {/* File Info */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-border-medium bg-surface-50">
             <div className="min-w-0 flex-1">
@@ -217,15 +245,104 @@ export default function SplitClient() {
             </Button>
           </div>
 
-          {/* Page Selection */}
+          {/* Page selection UI */}
           {splitMode === 'extract' && (
-            <PageSelector
-              pdfUrl={fileUrl}
-              totalPages={pageCount}
-              selectedPages={selectedPages}
-              onSelectionChange={setSelectedPages}
-              mode="select"
-            />
+            <div className="space-y-2">
+              {/* Selection controls */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-text-secondary mr-2">
+                  {selectedPages.length} of {pageCount} pages selected
+                </span>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPages(Array.from({ length: pageCount }, (_, i) => i + 1))}
+                  >
+                    All
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedPages([])}>
+                    None
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setSelectedPages(
+                        Array.from({ length: pageCount }, (_, i) => i + 1).filter((p) => p % 2 === 1)
+                      )
+                    }
+                  >
+                    Odd
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setSelectedPages(
+                        Array.from({ length: pageCount }, (_, i) => i + 1).filter((p) => p % 2 === 0)
+                      )
+                    }
+                  >
+                    Even
+                  </Button>
+                </div>
+              </div>
+
+              {/* Page thumbnails grid */}
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                {thumbnails.map((thumb) => {
+                  const isSelected = selectedPages.includes(thumb.pageNumber);
+                  return (
+                    <div
+                      key={thumb.pageNumber}
+                      className="relative"
+                    >
+                      <div
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedPages(selectedPages.filter((p) => p !== thumb.pageNumber));
+                          } else {
+                            setSelectedPages([...selectedPages, thumb.pageNumber]);
+                          }
+                        }}
+                        className={`rounded-lg border-2 overflow-hidden shadow-sm transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-accent-500 ring-2 ring-accent-500/20'
+                            : 'border-border-medium hover:border-accent-500/50'
+                        }`}
+                      >
+                        <img
+                          src={thumb.dataUrl}
+                          alt={`Page ${thumb.pageNumber}`}
+                          className="w-full h-auto bg-white dark:bg-gray-900"
+                        />
+                        <div
+                          className={`p-2 text-center text-sm font-medium ${
+                            isSelected
+                              ? 'text-accent-700 dark:text-accent-500 bg-accent-50 dark:bg-accent-900/50'
+                              : 'text-text-primary bg-surface-50 dark:bg-gray-800'
+                          }`}
+                        >
+                          Page {thumb.pageNumber}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent-500 text-white shadow-md">
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="text-xs text-text-tertiary">
+                Tip: Click pages to select them for extraction
+              </p>
+            </div>
           )}
 
           {/* Range Input */}
