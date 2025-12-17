@@ -290,7 +290,7 @@ export default function SplitClient() {
               </div>
 
               {/* Page thumbnails grid */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {thumbnails.map((thumb) => {
                   const isSelected = selectedPages.includes(thumb.pageNumber);
                   return (
