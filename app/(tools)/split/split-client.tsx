@@ -11,6 +11,7 @@ interface SplitProgress {
   current: number;
   total: number;
   percentage: number;
+  status?: string;
 }
 
 interface PageThumbnail {
