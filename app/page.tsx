@@ -13,6 +13,7 @@ import {
   Hash,
   Stamp,
   FileText,
+  ArrowUpDown,
 } from 'lucide-react';
 import { ToolCard } from '@/components/ui/tool-card';
 import { Alert } from '@/components/ui/alert';
@@ -77,6 +78,12 @@ const tools = [
     title: 'Extract Text',
     description: 'Extract text from PDFs and convert to markdown',
     href: '/extract-text',
+  },
+  {
+    icon: ArrowUpDown,
+    title: 'Organize Pages',
+    description: 'Reorder and reorganize pages with drag-and-drop',
+    href: '/organize',
   },
 ];
 
