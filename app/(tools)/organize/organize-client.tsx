@@ -67,26 +67,38 @@ function SortablePage({
 
   return (
     <div ref={setNodeRef} style={style} className="relative group">
-      {/* Drag Handle - Always visible on mobile */}
+      {/* Thumbnail - Entire area is draggable on mobile */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 left-2 z-10 p-2 rounded-lg bg-black/70 text-white cursor-grab active:cursor-grabbing touch-none md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+        className="border-2 border-border-medium rounded-lg overflow-hidden bg-white dark:bg-gray-900 hover:border-accent-500 transition-colors cursor-grab active:cursor-grabbing touch-none"
       >
-        <ArrowUpDown className="h-4 w-4" />
+        {/* Drag Handle Indicator - Desktop only */}
+        <div className="hidden md:block absolute top-2 left-2 z-10 p-2 rounded-lg bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <ArrowUpDown className="h-4 w-4" />
+        </div>
+
+        <img
+          src={page.dataUrl}
+          alt={`Page ${index + 1}`}
+          className="w-full h-auto pointer-events-none"
+        />
+        <div className="p-2 text-center text-sm font-medium text-text-primary bg-surface-50 dark:bg-gray-800">
+          Page {index + 1}
+        </div>
       </div>
 
-      {/* Delete Button - Always visible on mobile */}
+      {/* Delete Button - Fixed positioning outside drag area */}
       <button
         onClick={onDelete}
-        className="absolute top-2 right-2 z-10 p-2 rounded-lg bg-red-500 text-white md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600"
+        className="absolute -top-2 -right-2 z-20 p-2 rounded-full bg-red-500 text-white shadow-lg hover:bg-red-600 active:bg-red-700"
         title="Delete page"
       >
         <X className="h-4 w-4" />
       </button>
 
-      {/* Quick Move Buttons - Always visible on mobile */}
-      <div className="absolute bottom-2 left-2 z-10 flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+      {/* Quick Move Buttons - Desktop only on hover */}
+      <div className="hidden md:flex absolute bottom-2 left-2 z-10 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {index > 0 && (
           <button
             onClick={onMoveUp}
@@ -105,19 +117,6 @@ function SortablePage({
             <MoveDown className="h-3 w-3" />
           </button>
         )}
-      </div>
-
-      {/* Thumbnail */}
-      <div className="border-2 border-border-medium rounded-lg overflow-hidden bg-white dark:bg-gray-900 hover:border-accent-500 transition-colors">
-        <img
-          src={page.dataUrl}
-          alt={`Page ${index + 1}`}
-          className="w-full h-auto"
-          draggable={false}
-        />
-        <div className="p-2 text-center text-sm font-medium text-text-primary bg-surface-50 dark:bg-gray-800">
-          Page {index + 1}
-        </div>
       </div>
     </div>
   );
@@ -348,7 +347,7 @@ export default function OrganizeClient() {
           <Alert variant="info">
             <p className="font-medium">Drag pages to reorder them</p>
             <p className="text-sm mt-1 opacity-90">
-              Hover over pages to access quick actions: delete, move up, or move down
+              Touch and drag thumbnails on mobile, or use the delete button to remove pages. On desktop, hover for quick move actions.
             </p>
           </Alert>
 
