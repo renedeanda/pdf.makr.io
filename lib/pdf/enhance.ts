@@ -139,8 +139,8 @@ export async function addWatermark(
   const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
   const pages = pdfDoc.getPages();
 
-  // Get appropriate font based on text content
-  const { font, hasUnsupportedChars } = await getAppropriateFont(
+  // Get appropriate font based on text content and clean text
+  const { font, hasUnsupportedChars, cleanedText } = await getAppropriateFont(
     pdfDoc,
     options.text,
     true // bold
@@ -148,13 +148,7 @@ export async function addWatermark(
 
   let warning: string | undefined;
   if (hasUnsupportedChars) {
-    warning = 'Some special characters or emojis may not display correctly. Consider using standard text for best results.';
-  }
-
-  // Check if text contains emojis that might not render well
-  const hasEmojis = containsEmojisOrSpecialChars(options.text);
-  if (hasEmojis && !hasUnsupportedChars) {
-    warning = 'Unicode characters detected. Using enhanced font support for better compatibility.';
+    warning = 'Emojis have been removed from your watermark as they are not supported in PDFs. Only standard text will be displayed.';
   }
 
   for (let i = 0; i < pages.length; i++) {
@@ -168,7 +162,7 @@ export async function addWatermark(
       status: `Adding watermark to page ${i + 1}`,
     });
 
-    const textWidth = font.widthOfTextAtSize(options.text, options.fontSize);
+    const textWidth = font.widthOfTextAtSize(cleanedText, options.fontSize);
     const color = rgb(options.color.r, options.color.g, options.color.b);
 
     if (options.position === 'tiled') {
@@ -176,7 +170,7 @@ export async function addWatermark(
       const spacing = 200;
       for (let x = 0; x < width + textWidth; x += spacing) {
         for (let y = 0; y < height; y += spacing) {
-          page.drawText(options.text, {
+          page.drawText(cleanedText, {
             x,
             y,
             size: options.fontSize,
@@ -191,7 +185,7 @@ export async function addWatermark(
       // Single diagonal watermark
       const x = (width - textWidth) / 2;
       const y = height / 2;
-      page.drawText(options.text, {
+      page.drawText(cleanedText, {
         x,
         y,
         size: options.fontSize,
@@ -204,7 +198,7 @@ export async function addWatermark(
       // Center watermark
       const x = (width - textWidth) / 2;
       const y = height / 2;
-      page.drawText(options.text, {
+      page.drawText(cleanedText, {
         x,
         y,
         size: options.fontSize,

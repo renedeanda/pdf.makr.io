@@ -8,6 +8,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -66,30 +67,30 @@ function SortablePage({
 
   return (
     <div ref={setNodeRef} style={style} className="relative group">
-      {/* Drag Handle */}
+      {/* Drag Handle - Always visible on mobile */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 left-2 z-10 p-2 rounded-lg bg-black/50 text-white cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-2 left-2 z-10 p-2 rounded-lg bg-black/70 text-white cursor-grab active:cursor-grabbing touch-none md:opacity-0 md:group-hover:opacity-100 transition-opacity"
       >
         <ArrowUpDown className="h-4 w-4" />
       </div>
 
-      {/* Delete Button */}
+      {/* Delete Button - Always visible on mobile */}
       <button
         onClick={onDelete}
-        className="absolute top-2 right-2 z-10 p-2 rounded-lg bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+        className="absolute top-2 right-2 z-10 p-2 rounded-lg bg-red-500 text-white md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-600"
         title="Delete page"
       >
         <X className="h-4 w-4" />
       </button>
 
-      {/* Quick Move Buttons */}
-      <div className="absolute bottom-2 left-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Quick Move Buttons - Always visible on mobile */}
+      <div className="absolute bottom-2 left-2 z-10 flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
         {index > 0 && (
           <button
             onClick={onMoveUp}
-            className="p-1.5 rounded bg-black/50 text-white hover:bg-black/70"
+            className="p-1.5 rounded bg-black/70 text-white hover:bg-black/80 active:bg-black"
             title="Move up"
           >
             <MoveUp className="h-3 w-3" />
@@ -98,7 +99,7 @@ function SortablePage({
         {index < totalPages - 1 && (
           <button
             onClick={onMoveDown}
-            className="p-1.5 rounded bg-black/50 text-white hover:bg-black/70"
+            className="p-1.5 rounded bg-black/70 text-white hover:bg-black/80 active:bg-black"
             title="Move down"
           >
             <MoveDown className="h-3 w-3" />
@@ -132,7 +133,17 @@ export default function OrganizeClient() {
   const [complete, setComplete] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })

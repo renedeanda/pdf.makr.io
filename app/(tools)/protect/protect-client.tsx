@@ -1,6 +1,6 @@
 'use client';
 
-import { Lock, ArrowLeft, AlertCircle, ExternalLink } from 'lucide-react';
+import { Lock, ArrowLeft, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Alert } from '@/components/ui';
 
@@ -30,18 +30,10 @@ export default function ProtectClient() {
       </div>
 
       {/* Feature Not Available Notice */}
-      <Alert variant="warning" className="mb-6">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium">PDF Password Protection Not Yet Available</p>
-            <p className="text-sm mt-2 opacity-90">
-              While we strive to keep all PDF processing in your browser for privacy,
-              password protection requires encryption capabilities that are not currently
-              supported by browser-based PDF libraries.
-            </p>
-          </div>
-        </div>
+      <Alert variant="info" className="mb-6" title="PDF Password Protection Not Yet Available">
+        While we strive to keep all PDF processing in your browser for privacy,
+        password protection requires encryption capabilities that are not currently
+        supported by browser-based PDF libraries.
       </Alert>
 
       {/* Coming Soon Info */}
