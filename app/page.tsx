@@ -12,6 +12,7 @@ import {
   Zap,
   Hash,
   Stamp,
+  FileText,
 } from 'lucide-react';
 import { ToolCard } from '@/components/ui/tool-card';
 import { Alert } from '@/components/ui/alert';
@@ -70,6 +71,12 @@ const tools = [
     title: 'Watermark',
     description: 'Add text watermarks to PDF pages',
     href: '/watermark',
+  },
+  {
+    icon: FileText,
+    title: 'Extract Text',
+    description: 'Extract text from PDFs and convert to markdown',
+    href: '/extract-text',
   },
 ];
 
