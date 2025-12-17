@@ -96,9 +96,9 @@ export function KeyboardShortcutsModal() {
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="relative w-full max-w-2xl max-h-[80vh] overflow-auto bg-white dark:bg-surface-50 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="relative w-full max-w-2xl max-h-[80vh] overflow-auto bg-white dark:bg-[rgb(var(--surface-50))] rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
           {/* Header */}
-          <div className="sticky top-0 bg-white dark:bg-surface-50 border-b border-border-light p-6 flex items-center justify-between z-10">
+          <div className="sticky top-0 bg-white dark:bg-[rgb(var(--surface-50))] border-b border-border-light p-6 flex items-center justify-between z-10">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-50 dark:bg-accent-100/10">
                 <Keyboard className="h-5 w-5 text-accent-600 dark:text-accent-500" />
@@ -110,7 +110,7 @@ export function KeyboardShortcutsModal() {
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-surface-100 dark:hover:bg-surface-100 text-text-secondary hover:text-text-primary transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-surface-100 dark:hover:bg-[rgb(var(--surface-100))] text-text-secondary hover:text-text-primary transition-colors"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -130,7 +130,7 @@ export function KeyboardShortcutsModal() {
                     .map((shortcut, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between gap-4 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-100 transition-colors"
+                        className="flex items-center justify-between gap-4 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-[rgb(var(--surface-100))] transition-colors"
                       >
                         <span className="text-sm text-text-secondary flex-1">
                           {shortcut.description}
@@ -139,7 +139,7 @@ export function KeyboardShortcutsModal() {
                           {shortcut.keys.map((key, keyIndex) => (
                             <kbd
                               key={keyIndex}
-                              className="px-2 py-1 text-xs font-semibold text-text-primary bg-surface-100 dark:bg-surface-100 border border-border-medium rounded shadow-sm min-w-[2rem] text-center"
+                              className="px-2 py-1 text-xs font-semibold text-text-primary bg-surface-100 dark:bg-[rgb(var(--surface-100))] border border-border-medium rounded shadow-sm min-w-[2rem] text-center"
                             >
                               {formatKey(key)}
                             </kbd>
@@ -153,9 +153,9 @@ export function KeyboardShortcutsModal() {
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-surface-50 dark:bg-surface-100 border-t border-border-light p-4 text-center">
+          <div className="sticky bottom-0 bg-surface-50 dark:bg-[rgb(var(--surface-100))] border-t border-border-light p-4 text-center">
             <p className="text-xs text-text-tertiary">
-              Press <kbd className="px-1.5 py-0.5 text-xs font-semibold text-text-primary bg-surface-100 dark:bg-surface-50 border border-border-medium rounded">?</kbd> to toggle this dialog
+              Press <kbd className="px-1.5 py-0.5 text-xs font-semibold text-text-primary bg-surface-100 dark:bg-[rgb(var(--surface-50))] border border-border-medium rounded">?</kbd> to toggle this dialog
             </p>
           </div>
         </div>
