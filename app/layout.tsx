@@ -11,8 +11,9 @@ export const metadata: Metadata = {
     template: '%s | pdf.makr.io',
   },
   description:
-    'Free, browser-based PDF tools. Merge, split, compress, and convert PDFs locally. No uploads required, no limits.',
+    'Free, browser-based PDF toolkit with 16 tools. Merge, split, compress, convert, watermark, extract text, organize pages, edit metadata, and more. All processing happens locally in your browser. No uploads, no limits.',
   keywords: [
+    // Core Tools
     'PDF tools',
     'merge PDF',
     'split PDF',
@@ -20,9 +21,31 @@ export const metadata: Metadata = {
     'PDF to images',
     'images to PDF',
     'rotate PDF',
+    'delete PDF pages',
+    'page numbers PDF',
+    // Enhancement Tools
+    'PDF watermark',
+    'text watermark',
+    'image watermark',
+    'extract text from PDF',
+    'PDF to markdown',
+    'organize PDF pages',
+    'reorder PDF pages',
+    // Professional Tools
+    'PDF headers footers',
+    'add headers to PDF',
+    'PDF metadata',
+    'edit PDF metadata',
+    'PDF info',
+    'PDF properties',
+    // General
     'free PDF editor',
     'online PDF tools',
+    'browser PDF tools',
     'privacy PDF',
+    'secure PDF',
+    'no upload PDF',
+    'offline PDF tools',
   ],
   authors: [{ name: 'pdf.makr.io' }],
   creator: 'pdf.makr.io',

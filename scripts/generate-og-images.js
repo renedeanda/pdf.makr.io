@@ -12,6 +12,12 @@ const tools = [
   { name: 'pdf-to-images', title: 'PDF to Images', subtitle: 'Convert PDF Pages to PNG/JPG', icon: 'M4 16l4-4 4 4m-4-4v12M20 8v12' },
   { name: 'images-to-pdf', title: 'Images to PDF', subtitle: 'Convert Images to PDF', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' },
   { name: 'image', title: 'PDF Tools', subtitle: 'Free Online PDF Editor', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+  { name: 'image-watermark', title: 'Image Watermark', subtitle: 'Add PNG/JPG Watermarks to PDFs', icon: 'M4 16l4-4 4 4m-4-4v12M20 8v12' },
+  { name: 'extract-text', title: 'Extract Text', subtitle: 'Extract Text from PDFs to Markdown', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586' },
+  { name: 'organize', title: 'Organize Pages', subtitle: 'Reorder Pages with Drag and Drop', icon: 'M8 7h12M8 12h12m-12 5h12' },
+  { name: 'pdf-info', title: 'PDF Info', subtitle: 'View PDF Metadata and Properties', icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { name: 'edit-metadata', title: 'Edit Metadata', subtitle: 'Update PDF Metadata and Properties', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
+  { name: 'headers-footers', title: 'Headers & Footers', subtitle: 'Add Dynamic Headers and Footers', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
 ];
 
 function wrapText(text, maxLength) {

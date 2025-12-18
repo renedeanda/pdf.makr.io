@@ -13,6 +13,11 @@ interface EnhanceProgress {
   status: string;
 }
 
+interface PageThumbnail {
+  pageNumber: number;
+  dataUrl: string;
+}
+
 type Position = 'center' | 'diagonal' | 'tiled';
 
 const positionOptions: { value: Position; label: string; description: string }[] = [
@@ -24,6 +29,9 @@ const positionOptions: { value: Position; label: string; description: string }[]
 export default function WatermarkClient() {
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState(0);
+  const [thumbnails, setThumbnails] = useState<PageThumbnail[]>([]);
+  const [loadingThumbnails, setLoadingThumbnails] = useState(false);
+  const [selectedPages, setSelectedPages] = useState<number[]>([]);
   const [text, setText] = useState('CONFIDENTIAL');
   const [fontSize, setFontSize] = useState(48);
   const [opacity, setOpacity] = useState(0.3);
@@ -44,19 +52,38 @@ export default function WatermarkClient() {
     }
 
     try {
+      setLoadingThumbnails(true);
       const { getPDFPageCount } = await import('@/lib/pdf/utils');
+      const { generateThumbnails } = await import('@/lib/pdf/thumbnails');
+
       const count = await getPDFPageCount(droppedFile);
       setFile(droppedFile);
       setPageCount(count);
       setComplete(false);
       setError(null);
+
+      // Generate thumbnails
+      const thumbs = await generateThumbnails(droppedFile, 150, (p) => setProgress(p));
+      setThumbnails(thumbs);
+
+      // Default to all pages selected
+      setSelectedPages(Array.from({ length: count }, (_, i) => i + 1));
+
+      setLoadingThumbnails(false);
+      setProgress(null);
     } catch (err) {
       setError('Failed to read the PDF file. It may be corrupted or password-protected.');
+      setLoadingThumbnails(false);
     }
   }, []);
 
   const handleAddWatermark = async () => {
     if (!file || !text.trim()) return;
+
+    if (selectedPages.length === 0) {
+      setError('Please select at least one page to watermark');
+      return;
+    }
 
     setProcessing(true);
     setProgress(null);
@@ -76,6 +103,7 @@ export default function WatermarkClient() {
           rotation,
           position,
           color,
+          pages: selectedPages.length === pageCount ? undefined : selectedPages, // Only pass if not all pages
         },
         (p) => setProgress(p)
       );
@@ -99,10 +127,13 @@ export default function WatermarkClient() {
   const handleReset = () => {
     setFile(null);
     setPageCount(0);
+    setThumbnails([]);
+    setSelectedPages([]);
     setProgress(null);
     setComplete(false);
     setError(null);
     setWarning(null);
+    setLoadingThumbnails(false);
   };
 
   const colorPresets = [
@@ -181,8 +212,21 @@ export default function WatermarkClient() {
         </div>
       )}
 
+      {/* Loading Thumbnails */}
+      {loadingThumbnails && !processing && (
+        <div className="rounded-xl border border-border-medium bg-surface-50 p-8">
+          <h2 className="text-lg font-semibold text-text-primary mb-4 text-center">
+            Loading Pages...
+          </h2>
+          <ProgressBar
+            progress={progress?.percentage ?? 0}
+            status={progress?.status ?? 'Starting...'}
+          />
+        </div>
+      )}
+
       {/* Upload/Configure State */}
-      {!complete && !processing && (
+      {!complete && !processing && !loadingThumbnails && (
         <>
           {!file ? (
             <UploadZone
@@ -308,6 +352,118 @@ export default function WatermarkClient() {
                   />
                 </div>
               )}
+
+              {/* Page Selection */}
+              <div className="space-y-3 pt-4 border-t border-border-light">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-text-primary">Apply to Pages</label>
+                  <span className="text-sm text-text-secondary">
+                    {selectedPages.length} of {pageCount} selected
+                  </span>
+                </div>
+
+                {/* Quick Selectors */}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPages(Array.from({ length: pageCount }, (_, i) => i + 1))}
+                  >
+                    All
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPages([])}
+                  >
+                    None
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPages(Array.from({ length: pageCount }, (_, i) => i + 1).filter(p => p % 2 === 1))}
+                  >
+                    Odd
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPages(Array.from({ length: pageCount }, (_, i) => i + 1).filter(p => p % 2 === 0))}
+                  >
+                    Even
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPages([1])}
+                  >
+                    First
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPages([pageCount])}
+                  >
+                    Last
+                  </Button>
+                </div>
+
+                {/* Thumbnail Grid */}
+                {thumbnails.length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                    {thumbnails.map((thumb) => {
+                      const isSelected = selectedPages.includes(thumb.pageNumber);
+                      return (
+                        <div
+                          key={thumb.pageNumber}
+                          className="relative"
+                        >
+                          <div
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedPages(selectedPages.filter(p => p !== thumb.pageNumber));
+                              } else {
+                                setSelectedPages([...selectedPages, thumb.pageNumber].sort((a, b) => a - b));
+                              }
+                            }}
+                            className={`rounded-lg border-2 overflow-hidden shadow-sm transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-accent-500 ring-2 ring-accent-500/20'
+                                : 'border-border-medium hover:border-accent-500/50'
+                            }`}
+                          >
+                            <img
+                              src={thumb.dataUrl}
+                              alt={`Page ${thumb.pageNumber}`}
+                              className="w-full h-auto bg-white dark:bg-gray-900"
+                            />
+                            <div
+                              className={`p-2 text-center text-sm font-medium ${
+                                isSelected
+                                  ? 'text-accent-700 dark:text-accent-500 bg-accent-50 dark:bg-accent-900/50'
+                                  : 'text-text-primary bg-surface-50 dark:bg-gray-800'
+                              }`}
+                            >
+                              Page {thumb.pageNumber}
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent-500 text-white shadow-md">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <p className="text-xs text-text-tertiary">
+                  Tip: Click pages to select/deselect them for watermarking
+                </p>
+              </div>
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-border-light">

@@ -15,6 +15,9 @@ import {
   FileText,
   ArrowUpDown,
   Image as ImageIcon,
+  Info,
+  FileEdit,
+  FileType,
 } from 'lucide-react';
 import { ToolCard } from '@/components/ui/tool-card';
 import { Alert } from '@/components/ui/alert';
@@ -91,6 +94,24 @@ const tools = [
     title: 'Image Watermark',
     description: 'Add image watermarks (PNG/JPG) to PDFs',
     href: '/image-watermark',
+  },
+  {
+    icon: Info,
+    title: 'PDF Info',
+    description: 'View PDF metadata, properties, and security info',
+    href: '/pdf-info',
+  },
+  {
+    icon: FileEdit,
+    title: 'Edit Metadata',
+    description: 'Update PDF metadata like title, author, and subject',
+    href: '/edit-metadata',
+  },
+  {
+    icon: FileType,
+    title: 'Headers & Footers',
+    description: 'Add dynamic headers and footers with page numbers',
+    href: '/headers-footers',
   },
 ];
 

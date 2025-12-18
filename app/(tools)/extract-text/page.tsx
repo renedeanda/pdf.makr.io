@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Extract Text to Markdown - PDF.makr.io',
     description: 'Extract text from PDF files and convert to markdown format. Copy for AI processing or download as .md file.',
-    images: ['/og-image.png'],
+    images: ['/og-extract-text.png'],
   },
 };
 

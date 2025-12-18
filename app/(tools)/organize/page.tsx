@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Organize PDF Pages - PDF.makr.io',
     description: 'Reorder PDF pages with drag-and-drop. Reorganize, rearrange, and sort pages in your PDF documents.',
-    images: ['/og-image.png'],
+    images: ['/og-organize.png'],
   },
 };
 
