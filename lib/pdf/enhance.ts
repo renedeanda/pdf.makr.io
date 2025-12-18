@@ -30,6 +30,7 @@ export interface WatermarkOptions {
   rotation: number;
   position: 'center' | 'diagonal' | 'tiled';
   color: { r: number; g: number; b: number };
+  pages?: number[]; // Optional: specific pages to watermark (1-indexed)
 }
 
 export interface ImageWatermarkOptions {
@@ -151,15 +152,21 @@ export async function addWatermark(
     warning = 'Emojis have been removed from your watermark as they are not supported in PDFs. Only standard text will be displayed.';
   }
 
-  for (let i = 0; i < pages.length; i++) {
-    const page = pages[i];
+  // Determine which pages to watermark
+  const pagesToWatermark = options.pages
+    ? options.pages.map(p => p - 1) // Convert to 0-indexed
+    : pages.map((_, i) => i); // All pages if not specified
+
+  for (let i = 0; i < pagesToWatermark.length; i++) {
+    const pageIndex = pagesToWatermark[i];
+    const page = pages[pageIndex];
     const { width, height } = page.getSize();
 
     onProgress?.({
       current: i + 1,
-      total: pages.length,
-      percentage: Math.round(((i + 1) / pages.length) * 100),
-      status: `Adding watermark to page ${i + 1}`,
+      total: pagesToWatermark.length,
+      percentage: Math.round(((i + 1) / pagesToWatermark.length) * 100),
+      status: `Adding watermark to page ${pageIndex + 1}`,
     });
 
     const textWidth = font.widthOfTextAtSize(cleanedText, options.fontSize);
