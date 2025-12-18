@@ -5,6 +5,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const currentDate = new Date().toISOString();
 
   const tools = [
+    // Core Tools
     'merge',
     'split',
     'compress',
@@ -13,7 +14,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     'rotate',
     'delete',
     'page-numbers',
+    // Enhancement Tools
     'watermark',
+    'image-watermark',
+    'extract-text',
+    'organize',
+    // Professional Tools
+    'pdf-info',
+    'edit-metadata',
+    'headers-footers',
   ];
 
   const toolPages = tools.map((tool) => ({
