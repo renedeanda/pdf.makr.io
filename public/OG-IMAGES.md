@@ -14,13 +14,13 @@ This directory contains Open Graph images (1200x630 px) for social media sharing
 - ✅ og-page-numbers.png
 - ✅ og-watermark.png
 
-## Needed for New Tools
-- ⏳ og-image-watermark.png
-- ⏳ og-extract-text.png
-- ⏳ og-organize.png
-- ⏳ og-pdf-info.png
-- ⏳ og-edit-metadata.png
-- ⏳ og-headers-footers.png
+## New Tools (Phase 2 & 3)
+- ✅ og-image-watermark.png
+- ✅ og-extract-text.png
+- ✅ og-organize.png
+- ✅ og-pdf-info.png
+- ✅ og-edit-metadata.png
+- ✅ og-headers-footers.png
 
 ## Design Specifications
 
@@ -40,23 +40,13 @@ All OG images should be:
 - **edit-metadata**: Amber (#f59e0b)
 - **headers-footers**: Emerald (#10b981)
 
-## Quick Generation Options
+## How to Generate OG Images
 
-### Option 1: Use Figma/Canva
-1. Create 1200x630 canvas
-2. Use template from existing images
-3. Change tool name, icon, and color
-4. Export as PNG
+To generate OG images for new tools:
 
-### Option 2: Use HTML Generator
-Open `/scripts/generate-og-images.html` in browser and click "Generate All"
+1. **Add tool to the list** in `scripts/generate-og-images.js`
+2. **Run the generator**: `node scripts/generate-og-images.js` (creates SVG files)
+3. **Convert to PNG**: `node scripts/convert-images.js` (converts SVG to PNG and cleans up)
+4. **Update metadata**: Add OpenGraph images to the tool's `page.tsx`
 
-### Option 3: Use Online Tool
-Use https://www.opengraph.xyz/ or similar with these settings:
-- Title: Tool name (e.g., "Image Watermark")
-- Description: Short description
-- Background: #fefcf7
-- Add "pdf.makr.io" branding
-
-## Temporary Fallback
-Until tool-specific images are created, pages will use the main `/og-image.png` as fallback.
+All images are automatically generated with consistent branding, styling, and dimensions.
