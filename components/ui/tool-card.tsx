@@ -23,7 +23,7 @@ export function ToolCard({
     <Link
       href={href}
       className={cn(
-        'group relative overflow-hidden rounded-xl border border-border-medium bg-white dark:bg-[rgb(var(--surface-50))] p-6',
+        'bg-card group relative overflow-hidden rounded-xl border border-border-medium p-6',
         'transition-all duration-300 ease-out',
         'hover:scale-[1.02] hover:shadow-xl hover:shadow-accent-500/10 hover:border-accent-500/50 hover:-translate-y-0.5',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2',
