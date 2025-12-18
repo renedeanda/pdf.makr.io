@@ -16,6 +16,12 @@ const ogImages = [
   'og-rotate',
   'og-split',
   'og-watermark',
+  'og-image-watermark',
+  'og-extract-text',
+  'og-organize',
+  'og-pdf-info',
+  'og-edit-metadata',
+  'og-headers-footers',
 ];
 
 async function convertOGImages() {

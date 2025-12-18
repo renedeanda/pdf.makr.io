@@ -4,6 +4,11 @@ import HeadersFootersClient from './headers-footers-client';
 export const metadata: Metadata = {
   title: 'Headers & Footers | pdf.makr.io',
   description: 'Add dynamic headers and footers to PDF pages with page numbers, dates, and custom text',
+  openGraph: {
+    title: 'Headers & Footers | pdf.makr.io',
+    description: 'Add dynamic headers and footers to PDF pages with page numbers, dates, and custom text',
+    images: ['/og-headers-footers.png'],
+  },
 };
 
 export default function HeadersFootersPage() {

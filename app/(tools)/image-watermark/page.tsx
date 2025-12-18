@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Add Image Watermark to PDF - PDF.makr.io',
     description: 'Add image watermarks to PDF files with full control over opacity, size, position, and rotation.',
-    images: ['/og-image.png'],
+    images: ['/og-image-watermark.png'],
   },
 };
 
