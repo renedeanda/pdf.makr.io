@@ -4,7 +4,9 @@ A privacy-first, browser-based PDF toolkit. All processing happens locally in yo
 
 ## Features
 
-### PDF Tools (9 Tools)
+### PDF Tools (16 Tools)
+
+#### Core Tools
 - **Merge PDFs** - Combine multiple PDF files into a single document
 - **Split PDF** - Extract pages or split into multiple files
 - **Compress PDF** - Reduce file size while maintaining quality
@@ -13,7 +15,19 @@ A privacy-first, browser-based PDF toolkit. All processing happens locally in yo
 - **Rotate Pages** - Rotate PDF pages to any orientation
 - **Delete Pages** - Remove unwanted pages from your PDF
 - **Page Numbers** - Add page numbers to your PDF document
-- **Watermark** - Add text watermarks to PDF pages
+
+#### Enhancement Tools
+- **Text Watermark** - Add text watermarks with page selection, opacity, rotation, and color
+- **Image Watermark** - Add PNG/JPG watermarks to PDF pages
+- **Extract Text** - Extract text from PDFs and convert to markdown format
+- **Organize Pages** - Reorder and reorganize pages with drag-and-drop (mobile touch support)
+
+#### Professional Tools
+- **Headers & Footers** - Add dynamic headers/footers with variables ({page}, {total}, {date}, {title})
+- **Edit Metadata** - Update PDF metadata including title, author, subject, keywords
+- **PDF Info** - View comprehensive PDF metadata, file properties, and security info
+- **[Coming Soon]** Visual Signature - Add drawn, typed, or uploaded signatures
+- **[Coming Soon]** Crop Pages - Visual crop interface with preset dimensions
 
 ### Key Benefits
 - **100% Private** - Files are processed locally in your browser. Nothing is uploaded to any server.
@@ -26,9 +40,11 @@ A privacy-first, browser-based PDF toolkit. All processing happens locally in yo
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4
-- **PDF Processing**: pdf-lib, pdfjs-dist
+- **PDF Processing**: pdf-lib, pdfjs-dist, @pdf-lib/fontkit
+- **Drag & Drop**: @dnd-kit/core, @dnd-kit/sortable
 - **File Handling**: JSZip
 - **UI**: Lucide React, next-themes
+- **Fonts**: Noto Sans (Unicode support for watermarks)
 
 ## Getting Started
 
@@ -59,7 +75,7 @@ NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 ```
 pdf.makr.io/
 ├── app/
-│   ├── (tools)/          # Tool pages
+│   ├── (tools)/              # Tool pages
 │   │   ├── merge/
 │   │   ├── split/
 │   │   ├── compress/
@@ -68,16 +84,34 @@ pdf.makr.io/
 │   │   ├── rotate/
 │   │   ├── delete/
 │   │   ├── page-numbers/
-│   │   └── watermark/
+│   │   ├── watermark/
+│   │   ├── image-watermark/
+│   │   ├── extract-text/
+│   │   ├── organize/
+│   │   ├── pdf-info/
+│   │   ├── edit-metadata/
+│   │   └── headers-footers/
 │   ├── layout.tsx
 │   ├── page.tsx
 │   └── globals.css
 ├── components/
-│   ├── ui/               # Shared UI components
-│   ├── pdf/              # PDF-specific components
-│   └── layout/           # Layout components
+│   ├── ui/                   # Shared UI components
+│   ├── pdf/                  # PDF-specific components
+│   └── layout/               # Layout components
 ├── lib/
-│   ├── pdf/              # PDF processing utilities
+│   ├── pdf/                  # PDF processing utilities
+│   │   ├── compress.ts
+│   │   ├── convert.ts
+│   │   ├── enhance.ts        # Watermarks, page numbers
+│   │   ├── extract.ts        # Text extraction
+│   │   ├── fonts.ts          # Unicode font handling
+│   │   ├── headers-footers.ts
+│   │   ├── info.ts           # Metadata read/write
+│   │   ├── merge.ts
+│   │   ├── rotate.ts
+│   │   ├── split.ts
+│   │   ├── thumbnails.ts     # Page preview generation
+│   │   └── utils.ts
 │   └── utils.ts
 └── types/
     └── pdf.ts
