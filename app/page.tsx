@@ -15,6 +15,7 @@ import {
   FileText,
   ArrowUpDown,
   Image as ImageIcon,
+  Info,
 } from 'lucide-react';
 import { ToolCard } from '@/components/ui/tool-card';
 import { Alert } from '@/components/ui/alert';
@@ -91,6 +92,12 @@ const tools = [
     title: 'Image Watermark',
     description: 'Add image watermarks (PNG/JPG) to PDFs',
     href: '/image-watermark',
+  },
+  {
+    icon: Info,
+    title: 'PDF Info',
+    description: 'View PDF metadata, properties, and security info',
+    href: '/pdf-info',
   },
 ];
 
