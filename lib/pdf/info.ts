@@ -107,3 +107,53 @@ export function exportInfoAsJSON(info: PDFInfo, filename: string): void {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Update PDF metadata
+ */
+export async function setMetadata(file: File, metadata: Partial<PDFMetadata>): Promise<Uint8Array> {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+
+  // Set metadata fields (undefined values will clear the field)
+  if (metadata.title !== undefined) {
+    if (metadata.title) {
+      pdfDoc.setTitle(metadata.title);
+    }
+  }
+
+  if (metadata.author !== undefined) {
+    if (metadata.author) {
+      pdfDoc.setAuthor(metadata.author);
+    }
+  }
+
+  if (metadata.subject !== undefined) {
+    if (metadata.subject) {
+      pdfDoc.setSubject(metadata.subject);
+    }
+  }
+
+  if (metadata.keywords !== undefined) {
+    if (metadata.keywords) {
+      pdfDoc.setKeywords(metadata.keywords);
+    }
+  }
+
+  if (metadata.creator !== undefined) {
+    if (metadata.creator) {
+      pdfDoc.setCreator(metadata.creator);
+    }
+  }
+
+  if (metadata.producer !== undefined) {
+    if (metadata.producer) {
+      pdfDoc.setProducer(metadata.producer);
+    }
+  }
+
+  // Update modification date to now
+  pdfDoc.setModificationDate(new Date());
+
+  return pdfDoc.save();
+}

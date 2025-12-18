@@ -16,6 +16,7 @@ import {
   ArrowUpDown,
   Image as ImageIcon,
   Info,
+  FileEdit,
 } from 'lucide-react';
 import { ToolCard } from '@/components/ui/tool-card';
 import { Alert } from '@/components/ui/alert';
@@ -98,6 +99,12 @@ const tools = [
     title: 'PDF Info',
     description: 'View PDF metadata, properties, and security info',
     href: '/pdf-info',
+  },
+  {
+    icon: FileEdit,
+    title: 'Edit Metadata',
+    description: 'Update PDF metadata like title, author, and subject',
+    href: '/edit-metadata',
   },
 ];
 
