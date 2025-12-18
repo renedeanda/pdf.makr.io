@@ -64,15 +64,12 @@ export async function getPDFInfo(file: File): Promise<PDFInfo> {
     metadata.modificationDate = modDate.toISOString();
   }
 
-  // Get file info using pdfjs for version
-  const pdfjsLib = await import('pdfjs-dist');
-  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-  const pdfjs = await loadingTask.promise;
-
+  // Get file info
   const fileInfo: PDFFileInfo = {
     pageCount: pdfDoc.getPageCount(),
     fileSize: file.size,
-    pdfVersion: pdfjs.pdfInfo.version || undefined,
+    // PDF version would require accessing private _pdfInfo, so we'll skip it
+    pdfVersion: undefined,
   };
 
   // Get security info
