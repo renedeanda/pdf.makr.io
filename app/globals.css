@@ -114,6 +114,15 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Custom dark mode background classes for components */
+.bg-card {
+  background-color: white;
+}
+
+.dark .bg-card {
+  background-color: rgb(var(--surface-50));
+}
+
 /* Smooth transitions for theme changes */
 html {
   transition: background-color 0.3s ease, color 0.3s ease;
