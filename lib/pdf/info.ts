@@ -133,7 +133,9 @@ export async function setMetadata(file: File, metadata: Partial<PDFMetadata>): P
 
   if (metadata.keywords !== undefined) {
     if (metadata.keywords) {
-      pdfDoc.setKeywords(metadata.keywords);
+      // setKeywords expects an array, so split comma-separated keywords
+      const keywordsArray = metadata.keywords.split(',').map(k => k.trim()).filter(k => k.length > 0);
+      pdfDoc.setKeywords(keywordsArray);
     }
   }
 
