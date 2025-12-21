@@ -10,6 +10,7 @@ interface ToolCardProps {
   description: string;
   href: string;
   className?: string;
+  experimental?: boolean;
 }
 
 export function ToolCard({
@@ -18,6 +19,7 @@ export function ToolCard({
   description,
   href,
   className,
+  experimental = false,
 }: ToolCardProps) {
   return (
     <Link
@@ -38,6 +40,13 @@ export function ToolCard({
       <div className="relative flex h-14 w-14 items-center justify-center rounded-lg bg-accent-50 dark:bg-accent-100/10 transition-all duration-300 group-hover:bg-accent-100 dark:group-hover:bg-accent-100/20 group-hover:scale-110 group-hover:rotate-3">
         <Icon className="h-7 w-7 text-accent-600 dark:text-accent-500 transition-transform duration-300 group-hover:scale-110" />
       </div>
+
+      {/* Experimental Badge */}
+      {experimental && (
+        <div className="absolute top-3 right-3 px-2 py-1 text-xs font-semibold rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+          EXPERIMENTAL
+        </div>
+      )}
 
       {/* Content */}
       <div className="relative mt-4">
