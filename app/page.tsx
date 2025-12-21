@@ -18,11 +18,21 @@ import {
   Info,
   FileEdit,
   FileType,
+  ShieldAlert,
+  LucideIcon,
 } from 'lucide-react';
 import { ToolCard } from '@/components/ui/tool-card';
 import { Alert } from '@/components/ui/alert';
 
-const tools = [
+interface Tool {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  href: string;
+  experimental?: boolean;
+}
+
+const tools: Tool[] = [
   {
     icon: Layers,
     title: 'Merge PDFs',
@@ -113,6 +123,13 @@ const tools = [
     description: 'Add dynamic headers and footers with page numbers',
     href: '/headers-footers',
   },
+  {
+    icon: ShieldAlert,
+    title: 'Remove Redactions',
+    description: 'Detect and remove cosmetic redactions to check PDF security',
+    href: '/remove-redactions',
+    experimental: true,
+  },
 ];
 
 const features = [
@@ -179,6 +196,7 @@ export default function HomePage() {
               title={tool.title}
               description={tool.description}
               href={tool.href}
+              experimental={tool.experimental}
             />
           ))}
         </div>
