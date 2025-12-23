@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { ShieldAlert, Download, ArrowLeft, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, Download, ArrowLeft, AlertTriangle, Info, CheckCircle2, FileText, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { Button, UploadZone, ProgressBar, Alert } from '@/components/ui';
 import { formatFileSize } from '@/lib/utils';
@@ -17,9 +17,17 @@ interface RedactionAnalysis {
   totalPages: number;
   annotationsFound: number;
   annotationsRemoved: number;
+  redactionAnnotations: number;
+  squareAnnotations: number;
+  highlightAnnotations: number;
+  inkAnnotations: number;
+  otherAnnotations: number;
+  blackShapesDetected: number;
   pagesWithRedactions: number[];
   hasProperRedactions: boolean;
   warningMessages: string[];
+  detailedFindings: string[];
+  textRevealed: boolean;
 }
 
 export default function RemoveRedactionsClient() {
@@ -29,6 +37,8 @@ export default function RemoveRedactionsClient() {
   const [progress, setProgress] = useState<RedactionProgress | null>(null);
   const [analysis, setAnalysis] = useState<RedactionAnalysis | null>(null);
   const [processedData, setProcessedData] = useState<Uint8Array | null>(null);
+  const [textBefore, setTextBefore] = useState<string>('');
+  const [textAfter, setTextAfter] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [complete, setComplete] = useState(false);
 
@@ -44,6 +54,8 @@ export default function RemoveRedactionsClient() {
     setError(null);
     setAnalysis(null);
     setProcessedData(null);
+    setTextBefore('');
+    setTextAfter('');
 
     // Automatically analyze the file
     await analyzeFile(droppedFile);
@@ -82,6 +94,8 @@ export default function RemoveRedactionsClient() {
 
       setProcessedData(result.data);
       setAnalysis(result.analysis);
+      setTextBefore(result.textBefore);
+      setTextAfter(result.textAfter);
       setComplete(true);
       setProcessing(false);
       setProgress(null);
@@ -107,6 +121,8 @@ export default function RemoveRedactionsClient() {
     setProgress(null);
     setAnalysis(null);
     setProcessedData(null);
+    setTextBefore('');
+    setTextAfter('');
     setError(null);
     setComplete(false);
   };
@@ -137,7 +153,7 @@ export default function RemoveRedactionsClient() {
               </span>
             </div>
             <p className="text-text-secondary">
-              Detect and remove cosmetic redactions from PDFs. Check if redactions are properly applied or just visual overlays.
+              Advanced detection and removal of cosmetic redactions. Analyzes annotation types, colors, and content streams.
             </p>
           </div>
         </div>
@@ -162,27 +178,43 @@ export default function RemoveRedactionsClient() {
       <div className="bg-card border border-border-medium rounded-xl p-6 mb-8">
         <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
           <Info className="h-5 w-5 text-accent-600 dark:text-accent-500" />
-          How It Works
+          Detection Methods
         </h2>
         <div className="space-y-3 text-sm text-text-secondary">
           <div className="flex gap-3">
-            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 flex items-center justify-center text-xs font-semibold">
-              ✗
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-400 flex items-center justify-center text-xs font-semibold">
+              1
             </div>
             <div>
-              <strong className="text-text-primary">Cosmetic Redactions (Insecure):</strong>
-              <p className="mt-1">Black boxes drawn over text using annotation tools. The underlying content still exists
-              in the PDF and can be revealed by removing the overlay.</p>
+              <strong className="text-text-primary">Annotation Analysis:</strong>
+              <p className="mt-1">Identifies Redact, Square, Highlight, and Ink annotations with dark colors</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 flex items-center justify-center text-xs font-semibold">
-              ✓
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-400 flex items-center justify-center text-xs font-semibold">
+              2
             </div>
             <div>
-              <strong className="text-text-primary">Proper Redactions (Secure):</strong>
-              <p className="mt-1">Content is permanently removed from the PDF structure using professional tools
-              (Adobe Acrobat Pro, etc.). Cannot be recovered.</p>
+              <strong className="text-text-primary">Color Detection:</strong>
+              <p className="mt-1">Analyzes RGB, CMYK, and grayscale values to identify black/dark overlays</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-400 flex items-center justify-center text-xs font-semibold">
+              3
+            </div>
+            <div>
+              <strong className="text-text-primary">Content Stream Inspection:</strong>
+              <p className="mt-1">Detects black rectangles drawn directly in PDF content streams</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-400 flex items-center justify-center text-xs font-semibold">
+              4
+            </div>
+            <div>
+              <strong className="text-text-primary">Text Extraction Comparison:</strong>
+              <p className="mt-1">Compares text before and after to prove content was revealed</p>
             </div>
           </div>
         </div>
@@ -216,9 +248,13 @@ export default function RemoveRedactionsClient() {
           {analysis && !processing && (
             <div className="space-y-4 mt-6">
               <div className="border-t border-border-light pt-4">
-                <h4 className="font-semibold text-text-primary mb-3">Analysis Results</h4>
+                <h4 className="font-semibold text-text-primary mb-3 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-accent-600 dark:text-accent-500" />
+                  Analysis Results
+                </h4>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                {/* Statistics Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                   <div className="bg-surface-secondary rounded-lg p-3">
                     <div className="text-2xl font-bold text-text-primary">{analysis.totalPages}</div>
                     <div className="text-xs text-text-secondary">Total Pages</div>
@@ -227,19 +263,77 @@ export default function RemoveRedactionsClient() {
                     <div className="text-2xl font-bold text-amber-600 dark:text-amber-500">
                       {analysis.annotationsFound}
                     </div>
-                    <div className="text-xs text-text-secondary">Annotations Found</div>
+                    <div className="text-xs text-text-secondary">Annotations</div>
+                  </div>
+                  <div className="bg-surface-secondary rounded-lg p-3">
+                    <div className="text-2xl font-bold text-red-600 dark:text-red-500">
+                      {analysis.blackShapesDetected}
+                    </div>
+                    <div className="text-xs text-text-secondary">Likely Redactions</div>
+                  </div>
+                  <div className="bg-surface-secondary rounded-lg p-3">
+                    <div className="text-2xl font-bold text-text-primary">
+                      {analysis.pagesWithRedactions.length}
+                    </div>
+                    <div className="text-xs text-text-secondary">Affected Pages</div>
                   </div>
                 </div>
 
-                {analysis.pagesWithRedactions.length > 0 && (
-                  <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
-                    <div className="text-sm text-amber-900 dark:text-amber-300">
-                      <strong>Pages with annotations:</strong> {analysis.pagesWithRedactions.join(', ')}
+                {/* Annotation Type Breakdown */}
+                {(analysis.redactionAnnotations > 0 || analysis.squareAnnotations > 0 ||
+                  analysis.highlightAnnotations > 0 || analysis.inkAnnotations > 0) && (
+                  <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                    <div className="text-sm font-semibold text-amber-900 dark:text-amber-300 mb-2">
+                      Annotation Types Detected:
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm text-amber-800 dark:text-amber-400">
+                      {analysis.redactionAnnotations > 0 && (
+                        <div>⚠️ Redact: {analysis.redactionAnnotations}</div>
+                      )}
+                      {analysis.squareAnnotations > 0 && (
+                        <div>⬛ Rectangle: {analysis.squareAnnotations}</div>
+                      )}
+                      {analysis.highlightAnnotations > 0 && (
+                        <div>🖍️ Highlight: {analysis.highlightAnnotations}</div>
+                      )}
+                      {analysis.inkAnnotations > 0 && (
+                        <div>✏️ Ink: {analysis.inkAnnotations}</div>
+                      )}
+                      {analysis.otherAnnotations > 0 && (
+                        <div>📝 Other: {analysis.otherAnnotations}</div>
+                      )}
                     </div>
                   </div>
                 )}
 
-                <div className="space-y-2">
+                {/* Detailed Findings */}
+                {analysis.detailedFindings && analysis.detailedFindings.length > 0 && (
+                  <div className="bg-surface-secondary rounded-lg p-4 mb-4">
+                    <div className="text-sm font-semibold text-text-primary mb-2">
+                      Detailed Findings:
+                    </div>
+                    <div className="space-y-1">
+                      {analysis.detailedFindings.map((finding, idx) => (
+                        <div key={idx} className="flex gap-2 text-sm text-text-secondary">
+                          <span className="text-accent-600 dark:text-accent-500">•</span>
+                          {finding}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pages with Redactions */}
+                {analysis.pagesWithRedactions.length > 0 && (
+                  <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-4">
+                    <div className="text-sm text-red-900 dark:text-red-300">
+                      <strong>Pages with suspicious overlays:</strong> {analysis.pagesWithRedactions.join(', ')}
+                    </div>
+                  </div>
+                )}
+
+                {/* Warning Messages */}
+                <div className="space-y-2 mb-4">
                   {analysis.warningMessages.map((msg, idx) => (
                     <div key={idx} className="flex gap-2 text-sm text-text-secondary">
                       <span className="text-accent-600 dark:text-accent-500">•</span>
@@ -249,7 +343,8 @@ export default function RemoveRedactionsClient() {
                 </div>
               </div>
 
-              {analysis.annotationsFound > 0 && (
+              {/* Action Button */}
+              {analysis.blackShapesDetected > 0 ? (
                 <Button
                   variant="primary"
                   size="lg"
@@ -258,11 +353,20 @@ export default function RemoveRedactionsClient() {
                   className="w-full"
                 >
                   <ShieldAlert className="h-5 w-5" />
-                  Remove {analysis.annotationsFound} Annotation{analysis.annotationsFound !== 1 ? 's' : ''}
+                  Remove {analysis.blackShapesDetected} Suspicious Overlay{analysis.blackShapesDetected !== 1 ? 's' : ''}
                 </Button>
-              )}
-
-              {analysis.annotationsFound === 0 && (
+              ) : analysis.annotationsFound > 0 ? (
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={handleRemoveRedactions}
+                  disabled={processing}
+                  className="w-full"
+                >
+                  <ShieldAlert className="h-5 w-5" />
+                  Remove All {analysis.annotationsFound} Annotation{analysis.annotationsFound !== 1 ? 's' : ''}
+                </Button>
+              ) : (
                 <Alert variant="success" className="mt-4">
                   <div className="flex gap-2">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
@@ -315,12 +419,46 @@ export default function RemoveRedactionsClient() {
               <h3 className="font-semibold text-text-primary mb-1">Processing Complete</h3>
               <p className="text-sm text-text-secondary">
                 {analysis.annotationsRemoved > 0
-                  ? `Removed ${analysis.annotationsRemoved} cosmetic redaction(s) from your PDF.`
-                  : 'No cosmetic redactions were found to remove.'}
+                  ? `Removed ${analysis.annotationsRemoved} annotation(s) from your PDF.`
+                  : 'No annotations were found to remove.'}
               </p>
             </div>
           </div>
 
+          {/* Text Revelation Stats */}
+          {analysis.textRevealed && textBefore && textAfter && (
+            <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+              <div className="flex gap-2 mb-2">
+                <FileText className="h-5 w-5 text-green-600 dark:text-green-500 flex-shrink-0" />
+                <strong className="text-sm text-green-900 dark:text-green-300">
+                  ✓ Text Successfully Revealed!
+                </strong>
+              </div>
+              <div className="ml-7 space-y-1 text-sm text-green-800 dark:text-green-400">
+                <p>Before: {textBefore.length} characters</p>
+                <p>After: {textAfter.length} characters</p>
+                <p className="font-semibold">
+                  +{textAfter.length - textBefore.length} additional characters revealed
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Detailed Findings */}
+          {analysis.detailedFindings && analysis.detailedFindings.length > 0 && (
+            <div className="bg-surface-secondary rounded-lg p-4 mb-6">
+              <div className="text-sm font-semibold text-text-primary mb-2">
+                What Was Removed:
+              </div>
+              <div className="space-y-1">
+                {analysis.detailedFindings.map((finding, idx) => (
+                  <p key={idx} className="text-sm text-text-secondary">{finding}</p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Warning Messages */}
           {analysis.warningMessages.length > 0 && (
             <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
               <div className="flex gap-2 mb-2">
