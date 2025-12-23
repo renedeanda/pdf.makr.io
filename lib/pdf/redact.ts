@@ -1,12 +1,48 @@
-import { PDFDocument, PDFArray, PDFDict, PDFName, rgb } from 'pdf-lib';
+import { PDFDocument, PDFArray, PDFDict, PDFName, PDFString, PDFNumber, rgb } from 'pdf-lib';
+
+export interface RevealedText {
+  pageNumber: number;
+  boxIndex: number;
+  text: string;
+  bounds: { x: number; y: number; width: number; height: number };
+}
+
+export interface AnnotationDetail {
+  type: string;
+  subtype?: string;
+  color?: number[];
+  opacity?: number;
+  isLikelyRedaction: boolean;
+  reason: string;
+  bounds?: { x: number; y: number; width: number; height: number };
+}
+
+export interface PageAnalysis {
+  pageNumber: number;
+  annotationsFound: AnnotationDetail[];
+  suspiciousShapes: number;
+  textBefore?: string;
+  textAfter?: string;
+  hasChanges: boolean;
+}
 
 export interface RedactionAnalysis {
   totalPages: number;
   annotationsFound: number;
   annotationsRemoved: number;
+  redactionAnnotations: number;
+  squareAnnotations: number;
+  highlightAnnotations: number;
+  inkAnnotations: number;
+  otherAnnotations: number;
+  blackShapesDetected: number;
   pagesWithRedactions: number[];
+  pageDetails: PageAnalysis[];
   hasProperRedactions: boolean;
   warningMessages: string[];
+  detailedFindings: string[];
+  textRevealed: boolean;
+  revealedTextSnippets: RevealedText[];
 }
 
 export interface RedactionProgress {
@@ -17,7 +53,283 @@ export interface RedactionProgress {
 }
 
 /**
- * Analyzes a PDF for redactions (both proper and cosmetic)
+ * Helper to safely get PDF object values
+ */
+function getPDFValue(obj: any, key: string): any {
+  try {
+    if (obj instanceof PDFDict) {
+      return obj.lookup(PDFName.of(key));
+    }
+  } catch (e) {
+    return undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Helper to extract color from annotation
+ */
+function extractColor(colorObj: any): number[] | undefined {
+  try {
+    if (colorObj instanceof PDFArray) {
+      const components: number[] = [];
+      for (let i = 0; i < colorObj.size(); i++) {
+        const component = colorObj.lookup(i);
+        if (component instanceof PDFNumber) {
+          components.push(component.asNumber());
+        }
+      }
+      return components.length > 0 ? components : undefined;
+    }
+  } catch (e) {
+    return undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Determines if a color is dark (likely used for redaction)
+ */
+function isDarkColor(color?: number[]): boolean {
+  if (!color || color.length === 0) return false;
+
+  // Check if all components are below threshold (dark)
+  // RGB or CMYK - if all values are low (close to 0), it's dark/black
+  const threshold = 0.3;
+
+  if (color.length === 3) {
+    // RGB - all components should be low
+    return color.every(c => c <= threshold);
+  } else if (color.length === 4) {
+    // CMYK - K (black) should be high, or all CMY should be high
+    const k = color[3];
+    return k >= 0.7 || color.slice(0, 3).every(c => c >= 0.7);
+  } else if (color.length === 1) {
+    // Grayscale - value should be low
+    return color[0] <= threshold;
+  }
+
+  return false;
+}
+
+/**
+ * Analyzes an annotation to determine if it's likely a redaction
+ */
+function analyzeAnnotation(annotDict: PDFDict): AnnotationDetail {
+  const subtype = getPDFValue(annotDict, 'Subtype');
+  const subtypeStr = subtype instanceof PDFName ? subtype.asString().replace('/','') : 'Unknown';
+
+  const color = extractColor(getPDFValue(annotDict, 'C'));
+  const interiorColor = extractColor(getPDFValue(annotDict, 'IC'));
+  const opacity = getPDFValue(annotDict, 'CA');
+  const opacityValue = opacity instanceof PDFNumber ? opacity.asNumber() : undefined;
+  const bounds = getAnnotationBounds(annotDict);
+
+  const detail: AnnotationDetail = {
+    type: 'Annotation',
+    subtype: subtypeStr,
+    color,
+    opacity: opacityValue,
+    isLikelyRedaction: false,
+    reason: '',
+    bounds: bounds || undefined,
+  };
+
+  // Analyze if this is likely a redaction
+  const reasons: string[] = [];
+
+  // 1. Explicit Redact annotation type
+  if (subtypeStr === 'Redact') {
+    detail.isLikelyRedaction = true;
+    reasons.push('Redact annotation type');
+  }
+
+  // 2. Square or rectangle with dark/black color
+  if (subtypeStr === 'Square' && (isDarkColor(color) || isDarkColor(interiorColor))) {
+    detail.isLikelyRedaction = true;
+    reasons.push('Black/dark rectangle overlay');
+  }
+
+  // 3. Highlight with dark color (unusual - likely redaction)
+  if (subtypeStr === 'Highlight' && isDarkColor(color)) {
+    detail.isLikelyRedaction = true;
+    reasons.push('Dark highlight (unusual)');
+  }
+
+  // 4. Ink annotation with dark color
+  if (subtypeStr === 'Ink' && isDarkColor(color)) {
+    detail.isLikelyRedaction = true;
+    reasons.push('Dark ink overlay');
+  }
+
+  // 5. High opacity overlay (trying to hide content)
+  if (opacityValue !== undefined && opacityValue >= 0.8 && isDarkColor(color)) {
+    detail.isLikelyRedaction = true;
+    reasons.push('High opacity dark overlay');
+  }
+
+  // 6. FreeText with black background
+  if (subtypeStr === 'FreeText' && isDarkColor(color)) {
+    detail.isLikelyRedaction = true;
+    reasons.push('Text box with dark background');
+  }
+
+  detail.reason = reasons.length > 0 ? reasons.join(', ') : 'Standard annotation';
+
+  return detail;
+}
+
+/**
+ * Extract text from PDF using pdfjs with timeout protection
+ */
+async function extractTextFromPDF(file: File, timeoutMs: number = 10000): Promise<Map<number, string>> {
+  try {
+    // Create timeout promise
+    const timeoutPromise = new Promise<Map<number, string>>((_, reject) => {
+      setTimeout(() => reject(new Error('Text extraction timeout')), timeoutMs);
+    });
+
+    // Create extraction promise
+    const extractionPromise = (async () => {
+      const pdfjsLib = await import('pdfjs-dist');
+      if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const textMap = new Map<number, string>();
+
+      // For large PDFs, only extract first 50 pages to avoid hanging
+      const maxPages = Math.min(pdf.numPages, 50);
+
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const text = textContent.items
+          .map((item: any) => item.str || '')
+          .join(' ')
+          .trim();
+        textMap.set(i, text);
+      }
+
+      return textMap;
+    })();
+
+    // Race between extraction and timeout
+    return await Promise.race([extractionPromise, timeoutPromise]);
+  } catch (e) {
+    console.error('Error extracting text:', e);
+    return new Map();
+  }
+}
+
+/**
+ * Extract text with coordinates from specific areas of a PDF
+ */
+async function extractTextFromRedactionAreas(
+  file: File,
+  redactionAreas: Array<{ pageNumber: number; bounds: { x: number; y: number; width: number; height: number } }>,
+  timeoutMs: number = 10000
+): Promise<RevealedText[]> {
+  try {
+    const timeoutPromise = new Promise<RevealedText[]>((_, reject) => {
+      setTimeout(() => reject(new Error('Text extraction timeout')), timeoutMs);
+    });
+
+    const extractionPromise = (async () => {
+      const pdfjsLib = await import('pdfjs-dist');
+      if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const revealedTexts: RevealedText[] = [];
+
+      for (const area of redactionAreas) {
+        try {
+          const page = await pdf.getPage(area.pageNumber);
+          const textContent = await page.getTextContent();
+          const viewport = page.getViewport({ scale: 1 });
+
+          // Extract text items that fall within the redaction bounds
+          const textsInArea: string[] = [];
+
+          textContent.items.forEach((item: any) => {
+            if (!item.transform || !item.str) return;
+
+            // Get text item position (PDF coordinates)
+            const tx = item.transform[4];
+            const ty = item.transform[5];
+            const itemWidth = item.width || 0;
+            const itemHeight = item.height || 10;
+
+            // Convert PDF coords to match annotation coords
+            // PDF.js uses bottom-left origin, annotations use top-left
+            const pageHeight = viewport.height;
+            const itemX = tx;
+            const itemY = pageHeight - ty;
+
+            // Check if text item overlaps with redaction area
+            const overlapsX = itemX < (area.bounds.x + area.bounds.width) && (itemX + itemWidth) > area.bounds.x;
+            const overlapsY = itemY < (area.bounds.y + area.bounds.height) && (itemY + itemHeight) > area.bounds.y;
+
+            if (overlapsX && overlapsY) {
+              textsInArea.push(item.str.trim());
+            }
+          });
+
+          if (textsInArea.length > 0) {
+            revealedTexts.push({
+              pageNumber: area.pageNumber,
+              boxIndex: redactionAreas.indexOf(area),
+              text: textsInArea.join(' ').trim(),
+              bounds: area.bounds,
+            });
+          }
+        } catch (e) {
+          console.warn(`Failed to extract text from page ${area.pageNumber}:`, e);
+        }
+      }
+
+      return revealedTexts;
+    })();
+
+    return await Promise.race([extractionPromise, timeoutPromise]);
+  } catch (e) {
+    console.error('Error extracting text from redaction areas:', e);
+    return [];
+  }
+}
+
+/**
+ * Helper to extract annotation bounds
+ */
+function getAnnotationBounds(annotDict: PDFDict): { x: number; y: number; width: number; height: number } | null {
+  try {
+    const rect = getPDFValue(annotDict, 'Rect');
+    if (rect instanceof PDFArray && rect.size() === 4) {
+      const x1 = (rect.lookup(0) as PDFNumber).asNumber();
+      const y1 = (rect.lookup(1) as PDFNumber).asNumber();
+      const x2 = (rect.lookup(2) as PDFNumber).asNumber();
+      const y2 = (rect.lookup(3) as PDFNumber).asNumber();
+
+      return {
+        x: Math.min(x1, x2),
+        y: Math.min(y1, y2),
+        width: Math.abs(x2 - x1),
+        height: Math.abs(y2 - y1),
+      };
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+}
+
+/**
+ * Analyzes a PDF for redactions with comprehensive detection
  */
 export async function analyzeRedactions(
   file: File,
@@ -30,8 +342,27 @@ export async function analyzeRedactions(
   const totalPages = pages.length;
 
   let annotationsFound = 0;
+  let redactionAnnotations = 0;
+  let squareAnnotations = 0;
+  let highlightAnnotations = 0;
+  let inkAnnotations = 0;
+  let otherAnnotations = 0;
+  let blackShapesDetected = 0;
+
   const pagesWithRedactions: number[] = [];
+  const pageDetails: PageAnalysis[] = [];
   const warningMessages: string[] = [];
+  const detailedFindings: string[] = [];
+
+  // Extract text before processing (optional but useful)
+  if (onProgress) {
+    onProgress({
+      current: 0,
+      total: totalPages,
+      percentage: 0,
+      status: 'Extracting text for comparison...',
+    });
+  }
 
   for (let i = 0; i < pages.length; i++) {
     if (onProgress) {
@@ -44,48 +375,183 @@ export async function analyzeRedactions(
     }
 
     const page = pages[i];
+    const pageNum = i + 1;
     const annotations = page.node.lookup(PDFName.of('Annots'));
 
+    const pageAnalysis: PageAnalysis = {
+      pageNumber: pageNum,
+      annotationsFound: [],
+      suspiciousShapes: 0,
+      hasChanges: false,
+    };
+
     if (annotations instanceof PDFArray) {
-      const annotCount = annotations.size();
-      if (annotCount > 0) {
-        annotationsFound += annotCount;
-        pagesWithRedactions.push(i + 1);
+      for (let j = 0; j < annotations.size(); j++) {
+        const annotRef = annotations.lookup(j);
+
+        if (annotRef instanceof PDFDict) {
+          annotationsFound++;
+          const detail = analyzeAnnotation(annotRef);
+          pageAnalysis.annotationsFound.push(detail);
+
+          // Categorize
+          const subtype = detail.subtype?.toLowerCase() || '';
+          if (subtype === 'redact') {
+            redactionAnnotations++;
+          } else if (subtype === 'square') {
+            squareAnnotations++;
+          } else if (subtype === 'highlight') {
+            highlightAnnotations++;
+          } else if (subtype === 'ink') {
+            inkAnnotations++;
+          } else {
+            otherAnnotations++;
+          }
+
+          if (detail.isLikelyRedaction) {
+            pageAnalysis.hasChanges = true;
+            blackShapesDetected++;
+          }
+        }
+      }
+
+      if (pageAnalysis.hasChanges) {
+        pagesWithRedactions.push(pageNum);
       }
     }
+
+    // Analyze content stream for suspicious black rectangles
+    // This is a heuristic - we look for draw operations that might be redactions
+    try {
+      const contents = page.node.lookup(PDFName.of('Contents'));
+      if (contents) {
+        // This is simplified - full content stream parsing would be needed for accuracy
+        const contentStr = contents.toString();
+
+        // Look for common redaction patterns in content streams
+        // "re" = rectangle, "f" = fill, "RG" or "rg" = color
+        // Pattern: setting black color then drawing filled rectangle
+        const blackRectPattern = /0\s+0\s+0\s+(rg|RG).*?re.*?f/g;
+        const matches = contentStr.match(blackRectPattern);
+
+        if (matches && matches.length > 0) {
+          pageAnalysis.suspiciousShapes += matches.length;
+          blackShapesDetected += matches.length;
+          pageAnalysis.hasChanges = true;
+
+          if (!pagesWithRedactions.includes(pageNum)) {
+            pagesWithRedactions.push(pageNum);
+          }
+        }
+      }
+    } catch (e) {
+      // Content stream analysis failed - not critical
+    }
+
+    pageDetails.push(pageAnalysis);
   }
 
-  // Check for proper redactions by looking at content streams
-  // (This is a simplified check - proper redactions would have removed content)
-  const hasProperRedactions = false; // TODO: Implement deeper content analysis
+  // Generate detailed findings
+  if (redactionAnnotations > 0) {
+    detailedFindings.push(`Found ${redactionAnnotations} explicit Redact annotation(s) - these are cosmetic and can be removed`);
+  }
+  if (squareAnnotations > 0) {
+    const darkSquares = pageDetails.reduce((sum, p) =>
+      sum + p.annotationsFound.filter(a => a.subtype === 'Square' && a.isLikelyRedaction).length, 0);
+    if (darkSquares > 0) {
+      detailedFindings.push(`Found ${darkSquares} dark rectangle(s) that appear to be redaction overlays`);
+    }
+  }
+  if (highlightAnnotations > 0) {
+    const darkHighlights = pageDetails.reduce((sum, p) =>
+      sum + p.annotationsFound.filter(a => a.subtype === 'Highlight' && a.isLikelyRedaction).length, 0);
+    if (darkHighlights > 0) {
+      detailedFindings.push(`Found ${darkHighlights} dark highlight(s) used as redaction overlays`);
+    }
+  }
+  if (blackShapesDetected > 0) {
+    detailedFindings.push(`Detected ${blackShapesDetected} total suspicious dark overlay(s) across all pages`);
+  }
 
+  // Generate warning messages
   if (annotationsFound > 0) {
-    warningMessages.push(
-      `Found ${annotationsFound} annotation(s) that may be cosmetic redactions.`
-    );
-    warningMessages.push(
-      'These can be removed to reveal underlying content.'
-    );
+    const likelyRedactions = blackShapesDetected;
+    if (likelyRedactions > 0) {
+      warningMessages.push(
+        `⚠️ Found ${likelyRedactions} likely cosmetic redaction(s) that can be removed to reveal content.`
+      );
+    }
+
+    const otherAnnots = annotationsFound - likelyRedactions;
+    if (otherAnnots > 0) {
+      warningMessages.push(
+        `Found ${otherAnnots} other annotation(s) (comments, highlights, etc.) - will also be removed.`
+      );
+    }
+  } else {
+    warningMessages.push('No annotations detected in this PDF.');
   }
 
   return {
     totalPages,
     annotationsFound,
     annotationsRemoved: 0,
+    redactionAnnotations,
+    squareAnnotations,
+    highlightAnnotations,
+    inkAnnotations,
+    otherAnnotations,
+    blackShapesDetected,
     pagesWithRedactions,
-    hasProperRedactions,
+    pageDetails,
+    hasProperRedactions: false,
     warningMessages,
+    detailedFindings,
+    textRevealed: false,
+    revealedTextSnippets: [],
   };
 }
 
 /**
- * Removes cosmetic redactions from a PDF
- * This removes annotation overlays that hide content but don't actually delete it
+ * Removes cosmetic redactions from a PDF with advanced detection
  */
 export async function removeRedactions(
   file: File,
   onProgress?: (progress: RedactionProgress) => void
-): Promise<{ data: Uint8Array; analysis: RedactionAnalysis }> {
+): Promise<{ data: Uint8Array; analysis: RedactionAnalysis; textBefore: string; textAfter: string }> {
+  // Skip text extraction for large files (>10MB) to avoid hanging
+  const skipTextExtraction = file.size > 10 * 1024 * 1024;
+  let textBefore = '';
+
+  if (!skipTextExtraction) {
+    // Try to get text before removal with timeout
+    if (onProgress) {
+      onProgress({
+        current: 0,
+        total: 100,
+        percentage: 0,
+        status: 'Extracting text (optional)...',
+      });
+    }
+
+    try {
+      const textBeforeMap = await extractTextFromPDF(file, 8000); // 8 second timeout
+      textBefore = Array.from(textBeforeMap.values()).join('\n').trim();
+    } catch (e) {
+      console.warn('Text extraction skipped:', e);
+      // Continue without text extraction
+    }
+  }
+
+  if (onProgress) {
+    onProgress({
+      current: 10,
+      total: 100,
+      percentage: 10,
+      status: 'Analyzing redactions...',
+    });
+  }
+
   const arrayBuffer = await file.arrayBuffer();
   const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
 
@@ -93,79 +559,229 @@ export async function removeRedactions(
   const totalPages = pages.length;
 
   let annotationsRemoved = 0;
-  const pagesWithRedactions: number[] = [];
-  const warningMessages: string[] = [];
+  let redactionAnnotations = 0;
+  let squareAnnotations = 0;
+  let highlightAnnotations = 0;
+  let inkAnnotations = 0;
+  let otherAnnotations = 0;
+  let blackShapesDetected = 0;
 
-  // First pass: analyze and remove annotations
+  const pagesWithRedactions: number[] = [];
+  const pageDetails: PageAnalysis[] = [];
+  const detailedFindings: string[] = [];
+  const redactionAreas: Array<{ pageNumber: number; bounds: { x: number; y: number; width: number; height: number } }> = [];
+
+  // Remove annotations
   for (let i = 0; i < pages.length; i++) {
     if (onProgress) {
       onProgress({
-        current: i + 1,
-        total: totalPages,
-        percentage: Math.round(((i + 1) / totalPages) * 50), // First 50% for removal
-        status: `Processing page ${i + 1} of ${totalPages}...`,
+        current: 10 + Math.round((i / totalPages) * 80),
+        total: 100,
+        percentage: 10 + Math.round((i / totalPages) * 80),
+        status: `Removing redactions from page ${i + 1} of ${totalPages}...`,
       });
     }
 
     const page = pages[i];
+    const pageNum = i + 1;
     const pageDict = page.node;
     const annotations = pageDict.lookup(PDFName.of('Annots'));
 
+    const pageAnalysis: PageAnalysis = {
+      pageNumber: pageNum,
+      annotationsFound: [],
+      suspiciousShapes: 0,
+      hasChanges: false,
+    };
+
     if (annotations instanceof PDFArray) {
+      // Analyze each annotation before removing
+      for (let j = 0; j < annotations.size(); j++) {
+        const annotRef = annotations.lookup(j);
+        if (annotRef instanceof PDFDict) {
+          const detail = analyzeAnnotation(annotRef);
+          pageAnalysis.annotationsFound.push(detail);
+
+          const subtype = detail.subtype?.toLowerCase() || '';
+          if (subtype === 'redact') {
+            redactionAnnotations++;
+          } else if (subtype === 'square') {
+            squareAnnotations++;
+          } else if (subtype === 'highlight') {
+            highlightAnnotations++;
+          } else if (subtype === 'ink') {
+            inkAnnotations++;
+          } else {
+            otherAnnotations++;
+          }
+
+          if (detail.isLikelyRedaction) {
+            blackShapesDetected++;
+            pageAnalysis.hasChanges = true;
+
+            // Collect redaction area bounds for text extraction
+            if (detail.bounds) {
+              redactionAreas.push({
+                pageNumber: pageNum,
+                bounds: detail.bounds,
+              });
+            }
+          }
+        }
+      }
+
+      // Remove ALL annotations (safer approach - removes everything)
       const annotCount = annotations.size();
       if (annotCount > 0) {
-        // Remove all annotations (this includes redaction overlays, highlights, etc.)
         pageDict.delete(PDFName.of('Annots'));
         annotationsRemoved += annotCount;
-        pagesWithRedactions.push(i + 1);
+        pagesWithRedactions.push(pageNum);
+        pageAnalysis.hasChanges = true;
       }
     }
+
+    pageDetails.push(pageAnalysis);
   }
 
-  // Second pass: clean up any black rectangles drawn directly on the page
-  for (let i = 0; i < pages.length; i++) {
-    if (onProgress) {
-      onProgress({
-        current: i + 1,
-        total: totalPages,
-        percentage: 50 + Math.round(((i + 1) / totalPages) * 50), // Second 50%
-        status: `Cleaning page ${i + 1} of ${totalPages}...`,
-      });
+  // Clean up metadata that might contain redacted info
+  try {
+    const infoDict = pdfDoc.context.lookup(pdfDoc.context.trailerInfo.Info);
+    if (infoDict instanceof PDFDict) {
+      // Don't remove all metadata, just note it exists
+      detailedFindings.push('Metadata preserved (may contain original text)');
     }
-
-    // Note: Removing direct content stream redactions is complex and risky
-    // as it requires parsing and modifying PDF content streams.
-    // For now, we focus on annotation-based redactions which are most common.
+  } catch (e) {
+    // Metadata cleaning failed - not critical
   }
 
-  if (annotationsRemoved > 0) {
-    warningMessages.push(
-      `Removed ${annotationsRemoved} cosmetic redaction(s) from ${pagesWithRedactions.length} page(s).`
-    );
-    warningMessages.push(
-      'Previously hidden content may now be visible.'
-    );
-  } else {
-    warningMessages.push(
-      'No cosmetic redactions found.'
-    );
-    warningMessages.push(
-      'If the PDF appears redacted, the redactions may be properly applied (permanent).'
-    );
+  if (onProgress) {
+    onProgress({
+      current: 90,
+      total: 100,
+      percentage: 90,
+      status: 'Saving modified PDF...',
+    });
   }
 
   const data = await pdfDoc.save();
+
+  // Extract text after removal (only if we extracted before)
+  let textAfter = '';
+  if (!skipTextExtraction && textBefore) {
+    if (onProgress) {
+      onProgress({
+        current: 95,
+        total: 100,
+        percentage: 95,
+        status: 'Checking revealed text (optional)...',
+      });
+    }
+
+    try {
+      const blob = new Blob([new Uint8Array(data)], { type: 'application/pdf' });
+      const modifiedFile = new File([blob], file.name, { type: 'application/pdf' });
+      const textAfterMap = await extractTextFromPDF(modifiedFile, 8000); // 8 second timeout
+      textAfter = Array.from(textAfterMap.values()).join('\n').trim();
+    } catch (e) {
+      console.warn('Post-removal text extraction skipped:', e);
+      // Continue without text extraction
+    }
+  }
+
+  const textRevealed = textAfter.length > textBefore.length;
+
+  // Extract text from redaction areas to show what was actually hidden
+  let revealedTextSnippets: RevealedText[] = [];
+  if (redactionAreas.length > 0 && !skipTextExtraction) {
+    if (onProgress) {
+      onProgress({
+        current: 97,
+        total: 100,
+        percentage: 97,
+        status: 'Extracting text from redacted areas...',
+      });
+    }
+
+    try {
+      revealedTextSnippets = await extractTextFromRedactionAreas(file, redactionAreas, 8000);
+    } catch (e) {
+      console.warn('Failed to extract text from redaction areas:', e);
+    }
+  }
+
+  // Generate detailed findings
+  if (redactionAnnotations > 0) {
+    detailedFindings.push(`✓ Removed ${redactionAnnotations} explicit Redact annotation(s)`);
+  }
+  if (squareAnnotations > 0) {
+    detailedFindings.push(`✓ Removed ${squareAnnotations} rectangle annotation(s)`);
+  }
+  if (highlightAnnotations > 0) {
+    detailedFindings.push(`✓ Removed ${highlightAnnotations} highlight annotation(s)`);
+  }
+  if (inkAnnotations > 0) {
+    detailedFindings.push(`✓ Removed ${inkAnnotations} ink annotation(s)`);
+  }
+  if (otherAnnotations > 0) {
+    detailedFindings.push(`✓ Removed ${otherAnnotations} other annotation(s)`);
+  }
+
+  if (textRevealed) {
+    const charsRevealed = textAfter.length - textBefore.length;
+    detailedFindings.push(`📝 Revealed approximately ${charsRevealed} additional characters of text`);
+  } else if (skipTextExtraction) {
+    detailedFindings.push(`ℹ️ Text extraction skipped (large file) - redactions removed but text comparison unavailable`);
+  }
+
+  if (revealedTextSnippets.length > 0) {
+    detailedFindings.push(`🔍 Extracted ${revealedTextSnippets.length} text snippet(s) from behind redaction boxes`);
+  }
+
+  const warningMessages: string[] = [];
+
+  if (annotationsRemoved > 0) {
+    warningMessages.push(
+      `Removed ${annotationsRemoved} annotation(s) from ${pagesWithRedactions.length} page(s).`
+    );
+    if (blackShapesDetected > 0) {
+      warningMessages.push(
+        `${blackShapesDetected} of these were identified as likely redaction overlays.`
+      );
+    }
+    if (textRevealed) {
+      warningMessages.push(
+        '✓ Additional text was revealed - redactions were cosmetic!'
+      );
+    } else {
+      warningMessages.push(
+        'No additional text revealed, but overlays were removed.'
+      );
+    }
+  } else {
+    warningMessages.push('No annotations found to remove.');
+    warningMessages.push('If content appears redacted, it may be properly removed (permanent).');
+  }
 
   const analysis: RedactionAnalysis = {
     totalPages,
     annotationsFound: annotationsRemoved,
     annotationsRemoved,
+    redactionAnnotations,
+    squareAnnotations,
+    highlightAnnotations,
+    inkAnnotations,
+    otherAnnotations,
+    blackShapesDetected,
     pagesWithRedactions,
+    pageDetails,
     hasProperRedactions: false,
     warningMessages,
+    detailedFindings,
+    textRevealed,
+    revealedTextSnippets,
   };
 
-  return { data, analysis };
+  return { data, analysis, textBefore, textAfter };
 }
 
 /**
@@ -173,47 +789,5 @@ export async function removeRedactions(
  */
 export async function hasRedactions(file: File): Promise<boolean> {
   const analysis = await analyzeRedactions(file);
-  return analysis.annotationsFound > 0 || analysis.hasProperRedactions;
-}
-
-/**
- * Applies proper redactions to specified areas (the secure way to redact)
- * This is the opposite of removeRedactions - it permanently removes content
- */
-export async function applyProperRedaction(
-  file: File,
-  redactionAreas: Array<{ pageNumber: number; x: number; y: number; width: number; height: number }>,
-  onProgress?: (progress: RedactionProgress) => void
-): Promise<Uint8Array> {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-
-  const pages = pdfDoc.getPages();
-
-  for (const area of redactionAreas) {
-    if (onProgress) {
-      const current = redactionAreas.indexOf(area) + 1;
-      onProgress({
-        current,
-        total: redactionAreas.length,
-        percentage: Math.round((current / redactionAreas.length) * 100),
-        status: `Applying redaction ${current} of ${redactionAreas.length}...`,
-      });
-    }
-
-    const page = pages[area.pageNumber - 1];
-    if (!page) continue;
-
-    // Draw a black rectangle over the area (this is still cosmetic)
-    // True redaction would require removing the underlying content from the content stream
-    page.drawRectangle({
-      x: area.x,
-      y: area.y,
-      width: area.width,
-      height: area.height,
-      color: rgb(0, 0, 0),
-    });
-  }
-
-  return await pdfDoc.save();
+  return analysis.blackShapesDetected > 0 || analysis.hasProperRedactions;
 }
