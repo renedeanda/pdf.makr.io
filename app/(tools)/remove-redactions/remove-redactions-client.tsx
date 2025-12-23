@@ -467,17 +467,17 @@ export default function RemoveRedactionsClient() {
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button
               variant="primary"
               size="lg"
               onClick={handleDownload}
-              className="flex-1"
+              className="w-full sm:flex-1"
             >
               <Download className="h-5 w-5" />
               Download Unredacted PDF
             </Button>
-            <Button variant="secondary" size="lg" onClick={handleReset}>
+            <Button variant="secondary" size="lg" onClick={handleReset} className="w-full sm:w-auto">
               Process Another
             </Button>
           </div>
