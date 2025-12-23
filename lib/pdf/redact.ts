@@ -169,30 +169,44 @@ function analyzeAnnotation(annotDict: PDFDict): AnnotationDetail {
 }
 
 /**
- * Extract text from PDF using pdfjs
+ * Extract text from PDF using pdfjs with timeout protection
  */
-async function extractTextFromPDF(file: File): Promise<Map<number, string>> {
+async function extractTextFromPDF(file: File, timeoutMs: number = 10000): Promise<Map<number, string>> {
   try {
-    const pdfjsLib = await import('pdfjs-dist');
-    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-    }
+    // Create timeout promise
+    const timeoutPromise = new Promise<Map<number, string>>((_, reject) => {
+      setTimeout(() => reject(new Error('Text extraction timeout')), timeoutMs);
+    });
 
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const textMap = new Map<number, string>();
+    // Create extraction promise
+    const extractionPromise = (async () => {
+      const pdfjsLib = await import('pdfjs-dist');
+      if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      }
 
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const text = textContent.items
-        .map((item: any) => item.str || '')
-        .join(' ')
-        .trim();
-      textMap.set(i, text);
-    }
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const textMap = new Map<number, string>();
 
-    return textMap;
+      // For large PDFs, only extract first 50 pages to avoid hanging
+      const maxPages = Math.min(pdf.numPages, 50);
+
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const text = textContent.items
+          .map((item: any) => item.str || '')
+          .join(' ')
+          .trim();
+        textMap.set(i, text);
+      }
+
+      return textMap;
+    })();
+
+    // Race between extraction and timeout
+    return await Promise.race([extractionPromise, timeoutPromise]);
   } catch (e) {
     console.error('Error extracting text:', e);
     return new Map();
@@ -389,18 +403,29 @@ export async function removeRedactions(
   file: File,
   onProgress?: (progress: RedactionProgress) => void
 ): Promise<{ data: Uint8Array; analysis: RedactionAnalysis; textBefore: string; textAfter: string }> {
-  // First, get text before removal
-  if (onProgress) {
-    onProgress({
-      current: 0,
-      total: 100,
-      percentage: 0,
-      status: 'Extracting text before removal...',
-    });
-  }
+  // Skip text extraction for large files (>10MB) to avoid hanging
+  const skipTextExtraction = file.size > 10 * 1024 * 1024;
+  let textBefore = '';
 
-  const textBeforeMap = await extractTextFromPDF(file);
-  const textBefore = Array.from(textBeforeMap.values()).join('\n').trim();
+  if (!skipTextExtraction) {
+    // Try to get text before removal with timeout
+    if (onProgress) {
+      onProgress({
+        current: 0,
+        total: 100,
+        percentage: 0,
+        status: 'Extracting text (optional)...',
+      });
+    }
+
+    try {
+      const textBeforeMap = await extractTextFromPDF(file, 8000); // 8 second timeout
+      textBefore = Array.from(textBeforeMap.values()).join('\n').trim();
+    } catch (e) {
+      console.warn('Text extraction skipped:', e);
+      // Continue without text extraction
+    }
+  }
 
   if (onProgress) {
     onProgress({
@@ -515,20 +540,28 @@ export async function removeRedactions(
 
   const data = await pdfDoc.save();
 
-  // Extract text after removal
-  if (onProgress) {
-    onProgress({
-      current: 95,
-      total: 100,
-      percentage: 95,
-      status: 'Extracting revealed text...',
-    });
-  }
+  // Extract text after removal (only if we extracted before)
+  let textAfter = '';
+  if (!skipTextExtraction && textBefore) {
+    if (onProgress) {
+      onProgress({
+        current: 95,
+        total: 100,
+        percentage: 95,
+        status: 'Checking revealed text (optional)...',
+      });
+    }
 
-  const blob = new Blob([new Uint8Array(data)], { type: 'application/pdf' });
-  const modifiedFile = new File([blob], file.name, { type: 'application/pdf' });
-  const textAfterMap = await extractTextFromPDF(modifiedFile);
-  const textAfter = Array.from(textAfterMap.values()).join('\n').trim();
+    try {
+      const blob = new Blob([new Uint8Array(data)], { type: 'application/pdf' });
+      const modifiedFile = new File([blob], file.name, { type: 'application/pdf' });
+      const textAfterMap = await extractTextFromPDF(modifiedFile, 8000); // 8 second timeout
+      textAfter = Array.from(textAfterMap.values()).join('\n').trim();
+    } catch (e) {
+      console.warn('Post-removal text extraction skipped:', e);
+      // Continue without text extraction
+    }
+  }
 
   const textRevealed = textAfter.length > textBefore.length;
 
@@ -552,6 +585,8 @@ export async function removeRedactions(
   if (textRevealed) {
     const charsRevealed = textAfter.length - textBefore.length;
     detailedFindings.push(`📝 Revealed approximately ${charsRevealed} additional characters of text`);
+  } else if (skipTextExtraction) {
+    detailedFindings.push(`ℹ️ Text extraction skipped (large file) - redactions removed but text comparison unavailable`);
   }
 
   const warningMessages: string[] = [];
