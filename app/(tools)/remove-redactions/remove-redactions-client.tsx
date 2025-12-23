@@ -160,18 +160,10 @@ export default function RemoveRedactionsClient() {
       </div>
 
       {/* Security Warning */}
-      <Alert variant="warning" className="mb-6">
-        <div className="flex gap-3">
-          <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-          <div>
-            <strong className="block mb-1">Security Awareness Tool</strong>
-            <p className="text-sm">
-              This tool demonstrates the difference between <strong>cosmetic redactions</strong> (removable overlays)
-              and <strong>proper redactions</strong> (permanent content removal). Use it to verify your redactions
-              are truly secure before sharing sensitive documents.
-            </p>
-          </div>
-        </div>
+      <Alert variant="warning" title="Security Awareness Tool" className="mb-6">
+        This tool demonstrates the difference between <strong>cosmetic redactions</strong> (removable overlays)
+        and <strong>proper redactions</strong> (permanent content removal). Use it to verify your redactions
+        are truly secure before sharing sensitive documents.
       </Alert>
 
       {/* How It Works */}
@@ -234,12 +226,12 @@ export default function RemoveRedactionsClient() {
       {/* File Info */}
       {file && !complete && (
         <div className="bg-card border border-border-medium rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-medium text-text-primary">{file.name}</h3>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-text-primary truncate">{file.name}</h3>
               <p className="text-sm text-text-secondary">{formatFileSize(file.size)}</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleReset}>
+            <Button variant="ghost" size="sm" onClick={handleReset} className="flex-shrink-0">
               Remove
             </Button>
           </div>
@@ -367,18 +359,20 @@ export default function RemoveRedactionsClient() {
                   Remove All {analysis.annotationsFound} Annotation{analysis.annotationsFound !== 1 ? 's' : ''}
                 </Button>
               ) : (
-                <Alert variant="success" className="mt-4">
-                  <div className="flex gap-2">
-                    <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
-                    <div>
-                      <strong>No cosmetic redactions detected.</strong>
-                      <p className="text-sm mt-1">
-                        This PDF either has no redactions, or they are properly applied (permanent).
-                        If you see redacted areas, they are likely secure.
-                      </p>
-                    </div>
-                  </div>
-                </Alert>
+                <div className="space-y-4">
+                  <Alert variant="success" title="No cosmetic redactions detected">
+                    This PDF either has no redactions, or they are properly applied (permanent).
+                    If you see redacted areas, they are likely secure.
+                  </Alert>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleReset}
+                    className="w-full"
+                  >
+                    Try Another PDF
+                  </Button>
+                </div>
               )}
             </div>
           )}
