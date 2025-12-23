@@ -13,6 +13,13 @@ interface RedactionProgress {
   status: string;
 }
 
+interface RevealedText {
+  pageNumber: number;
+  boxIndex: number;
+  text: string;
+  bounds: { x: number; y: number; width: number; height: number };
+}
+
 interface RedactionAnalysis {
   totalPages: number;
   annotationsFound: number;
@@ -28,6 +35,7 @@ interface RedactionAnalysis {
   warningMessages: string[];
   detailedFindings: string[];
   textRevealed: boolean;
+  revealedTextSnippets: RevealedText[];
 }
 
 export default function RemoveRedactionsClient() {
@@ -434,6 +442,38 @@ export default function RemoveRedactionsClient() {
                 <p className="font-semibold">
                   +{textAfter.length - textBefore.length} additional characters revealed
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* Revealed Text Snippets */}
+          {analysis.revealedTextSnippets && analysis.revealedTextSnippets.length > 0 && (
+            <div className="bg-red-50 dark:bg-red-900/10 border-2 border-red-300 dark:border-red-700 rounded-lg p-4 mb-6">
+              <div className="flex gap-2 mb-3">
+                <ShieldAlert className="h-5 w-5 text-red-600 dark:text-red-500 flex-shrink-0" />
+                <strong className="text-sm text-red-900 dark:text-red-300">
+                  🔓 Hidden Text Revealed from Redaction Boxes
+                </strong>
+              </div>
+              <div className="ml-7 space-y-3">
+                <p className="text-sm text-red-800 dark:text-red-400 mb-3">
+                  The following text was found BEHIND the redaction overlays. This proves the redactions were cosmetic only:
+                </p>
+                {analysis.revealedTextSnippets.map((snippet, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white dark:bg-gray-900 border border-red-200 dark:border-red-800 rounded-md p-3"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-semibold text-red-700 dark:text-red-400">
+                        Page {snippet.pageNumber}, Box #{snippet.boxIndex + 1}
+                      </span>
+                    </div>
+                    <div className="font-mono text-sm text-red-900 dark:text-red-200 bg-red-50 dark:bg-red-950 p-2 rounded border border-red-200 dark:border-red-800 break-words">
+                      {snippet.text}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

@@ -1,5 +1,12 @@
 import { PDFDocument, PDFArray, PDFDict, PDFName, PDFString, PDFNumber, rgb } from 'pdf-lib';
 
+export interface RevealedText {
+  pageNumber: number;
+  boxIndex: number;
+  text: string;
+  bounds: { x: number; y: number; width: number; height: number };
+}
+
 export interface AnnotationDetail {
   type: string;
   subtype?: string;
@@ -7,6 +14,7 @@ export interface AnnotationDetail {
   opacity?: number;
   isLikelyRedaction: boolean;
   reason: string;
+  bounds?: { x: number; y: number; width: number; height: number };
 }
 
 export interface PageAnalysis {
@@ -34,6 +42,7 @@ export interface RedactionAnalysis {
   warningMessages: string[];
   detailedFindings: string[];
   textRevealed: boolean;
+  revealedTextSnippets: RevealedText[];
 }
 
 export interface RedactionProgress {
@@ -114,6 +123,7 @@ function analyzeAnnotation(annotDict: PDFDict): AnnotationDetail {
   const interiorColor = extractColor(getPDFValue(annotDict, 'IC'));
   const opacity = getPDFValue(annotDict, 'CA');
   const opacityValue = opacity instanceof PDFNumber ? opacity.asNumber() : undefined;
+  const bounds = getAnnotationBounds(annotDict);
 
   const detail: AnnotationDetail = {
     type: 'Annotation',
@@ -122,6 +132,7 @@ function analyzeAnnotation(annotDict: PDFDict): AnnotationDetail {
     opacity: opacityValue,
     isLikelyRedaction: false,
     reason: '',
+    bounds: bounds || undefined,
   };
 
   // Analyze if this is likely a redaction
@@ -211,6 +222,110 @@ async function extractTextFromPDF(file: File, timeoutMs: number = 10000): Promis
     console.error('Error extracting text:', e);
     return new Map();
   }
+}
+
+/**
+ * Extract text with coordinates from specific areas of a PDF
+ */
+async function extractTextFromRedactionAreas(
+  file: File,
+  redactionAreas: Array<{ pageNumber: number; bounds: { x: number; y: number; width: number; height: number } }>,
+  timeoutMs: number = 10000
+): Promise<RevealedText[]> {
+  try {
+    const timeoutPromise = new Promise<RevealedText[]>((_, reject) => {
+      setTimeout(() => reject(new Error('Text extraction timeout')), timeoutMs);
+    });
+
+    const extractionPromise = (async () => {
+      const pdfjsLib = await import('pdfjs-dist');
+      if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const revealedTexts: RevealedText[] = [];
+
+      for (const area of redactionAreas) {
+        try {
+          const page = await pdf.getPage(area.pageNumber);
+          const textContent = await page.getTextContent();
+          const viewport = page.getViewport({ scale: 1 });
+
+          // Extract text items that fall within the redaction bounds
+          const textsInArea: string[] = [];
+
+          textContent.items.forEach((item: any) => {
+            if (!item.transform || !item.str) return;
+
+            // Get text item position (PDF coordinates)
+            const tx = item.transform[4];
+            const ty = item.transform[5];
+            const itemWidth = item.width || 0;
+            const itemHeight = item.height || 10;
+
+            // Convert PDF coords to match annotation coords
+            // PDF.js uses bottom-left origin, annotations use top-left
+            const pageHeight = viewport.height;
+            const itemX = tx;
+            const itemY = pageHeight - ty;
+
+            // Check if text item overlaps with redaction area
+            const overlapsX = itemX < (area.bounds.x + area.bounds.width) && (itemX + itemWidth) > area.bounds.x;
+            const overlapsY = itemY < (area.bounds.y + area.bounds.height) && (itemY + itemHeight) > area.bounds.y;
+
+            if (overlapsX && overlapsY) {
+              textsInArea.push(item.str.trim());
+            }
+          });
+
+          if (textsInArea.length > 0) {
+            revealedTexts.push({
+              pageNumber: area.pageNumber,
+              boxIndex: redactionAreas.indexOf(area),
+              text: textsInArea.join(' ').trim(),
+              bounds: area.bounds,
+            });
+          }
+        } catch (e) {
+          console.warn(`Failed to extract text from page ${area.pageNumber}:`, e);
+        }
+      }
+
+      return revealedTexts;
+    })();
+
+    return await Promise.race([extractionPromise, timeoutPromise]);
+  } catch (e) {
+    console.error('Error extracting text from redaction areas:', e);
+    return [];
+  }
+}
+
+/**
+ * Helper to extract annotation bounds
+ */
+function getAnnotationBounds(annotDict: PDFDict): { x: number; y: number; width: number; height: number } | null {
+  try {
+    const rect = getPDFValue(annotDict, 'Rect');
+    if (rect instanceof PDFArray && rect.size() === 4) {
+      const x1 = (rect.lookup(0) as PDFNumber).asNumber();
+      const y1 = (rect.lookup(1) as PDFNumber).asNumber();
+      const x2 = (rect.lookup(2) as PDFNumber).asNumber();
+      const y2 = (rect.lookup(3) as PDFNumber).asNumber();
+
+      return {
+        x: Math.min(x1, x2),
+        y: Math.min(y1, y2),
+        width: Math.abs(x2 - x1),
+        height: Math.abs(y2 - y1),
+      };
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
 }
 
 /**
@@ -393,6 +508,7 @@ export async function analyzeRedactions(
     warningMessages,
     detailedFindings,
     textRevealed: false,
+    revealedTextSnippets: [],
   };
 }
 
@@ -453,6 +569,7 @@ export async function removeRedactions(
   const pagesWithRedactions: number[] = [];
   const pageDetails: PageAnalysis[] = [];
   const detailedFindings: string[] = [];
+  const redactionAreas: Array<{ pageNumber: number; bounds: { x: number; y: number; width: number; height: number } }> = [];
 
   // Remove annotations
   for (let i = 0; i < pages.length; i++) {
@@ -501,6 +618,14 @@ export async function removeRedactions(
           if (detail.isLikelyRedaction) {
             blackShapesDetected++;
             pageAnalysis.hasChanges = true;
+
+            // Collect redaction area bounds for text extraction
+            if (detail.bounds) {
+              redactionAreas.push({
+                pageNumber: pageNum,
+                bounds: detail.bounds,
+              });
+            }
           }
         }
       }
@@ -565,6 +690,25 @@ export async function removeRedactions(
 
   const textRevealed = textAfter.length > textBefore.length;
 
+  // Extract text from redaction areas to show what was actually hidden
+  let revealedTextSnippets: RevealedText[] = [];
+  if (redactionAreas.length > 0 && !skipTextExtraction) {
+    if (onProgress) {
+      onProgress({
+        current: 97,
+        total: 100,
+        percentage: 97,
+        status: 'Extracting text from redacted areas...',
+      });
+    }
+
+    try {
+      revealedTextSnippets = await extractTextFromRedactionAreas(file, redactionAreas, 8000);
+    } catch (e) {
+      console.warn('Failed to extract text from redaction areas:', e);
+    }
+  }
+
   // Generate detailed findings
   if (redactionAnnotations > 0) {
     detailedFindings.push(`✓ Removed ${redactionAnnotations} explicit Redact annotation(s)`);
@@ -587,6 +731,10 @@ export async function removeRedactions(
     detailedFindings.push(`📝 Revealed approximately ${charsRevealed} additional characters of text`);
   } else if (skipTextExtraction) {
     detailedFindings.push(`ℹ️ Text extraction skipped (large file) - redactions removed but text comparison unavailable`);
+  }
+
+  if (revealedTextSnippets.length > 0) {
+    detailedFindings.push(`🔍 Extracted ${revealedTextSnippets.length} text snippet(s) from behind redaction boxes`);
   }
 
   const warningMessages: string[] = [];
@@ -630,6 +778,7 @@ export async function removeRedactions(
     warningMessages,
     detailedFindings,
     textRevealed,
+    revealedTextSnippets,
   };
 
   return { data, analysis, textBefore, textAfter };
